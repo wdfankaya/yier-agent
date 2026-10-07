@@ -6,7 +6,10 @@
 
 商品咨询 · 订单查询 · 物流跟踪 · 退换货 · 投诉处理
 
-`Python 3.11+` · `FastAPI` · `SSE` · `PostgreSQL / pgvector` · `Redis`
+![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
+![FastAPI](https://img.shields.io/badge/FastAPI-SSE-009688?style=flat-square&logo=fastapi&logoColor=white)
+![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)
+![Redis](https://img.shields.io/badge/Redis-Cache%20%26%20Rate%20Limit-DC382D?style=flat-square&logo=redis&logoColor=white)
 
 [功能概览](#功能概览) · [关键设计](#关键设计) · [快速开始](#快速开始) · [HTTP 服务](#http-服务) · [测试与评估](#测试与评估)
 
