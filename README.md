@@ -6,12 +6,9 @@
 
 商品咨询 · 订单查询 · 物流跟踪 · 退换货 · 投诉处理
 
-![Python](https://img.shields.io/badge/Python-3.11%2B-3776AB?style=flat-square&logo=python&logoColor=white)
-![FastAPI](https://img.shields.io/badge/FastAPI-SSE-009688?style=flat-square&logo=fastapi&logoColor=white)
-![PostgreSQL](https://img.shields.io/badge/PostgreSQL-pgvector-4169E1?style=flat-square&logo=postgresql&logoColor=white)
-![Redis](https://img.shields.io/badge/Redis-Cache%20%26%20Rate%20Limit-DC382D?style=flat-square&logo=redis&logoColor=white)
+`Python 3.11+` · `FastAPI` · `SSE` · `PostgreSQL / pgvector` · `Redis`
 
-[功能概览](#功能概览) · [系统架构](#系统架构) · [快速开始](#快速开始) · [HTTP 服务](#http-服务) · [测试与评估](#测试与评估)
+[功能概览](#功能概览) · [关键设计](#关键设计) · [快速开始](#快速开始) · [HTTP 服务](#http-服务) · [测试与评估](#测试与评估)
 
 </div>
 
@@ -32,31 +29,7 @@
 | **操作确认** | 工具执行层拦截退款请求，经用户批准后执行；拒绝后阻止该会话对同一订单再次退款 |
 | **效果验证** | 隔离评估环境、调用轨迹、规则指标与 LLM-as-Judge；保留对照实验及压测记录 |
 
-## 系统架构
-
-```mermaid
-flowchart TB
-    CLI[命令行] --> CORE
-    WEB[网页 / HTTP 客户端] --> API[FastAPI · SSE]
-    API --> REG[会话注册表]
-    REG --> CORE[单 Agent / 意图路由编排]
-    CORE --> LOOP[ReAct 执行循环]
-    CORE <--> MEM[上下文摘要与长短期记忆]
-    LOOP <--> LLM[模型接口]
-    LOOP --> TOOLS[工具管理 · Skills · 操作确认]
-    TOOLS --> LOCAL[订单 / 物流 / 商品 / 退款]
-    TOOLS --> MCP[MCP 工具服务]
-    TOOLS --> RAG[知识检索 · 可选重排]
-    RAG --> KB[numpy / Chroma / pgvector]
-    CORE --> STORE[会话存储]
-    MEM --> STORE
-    STORE --> PG[(PostgreSQL)]
-    STORE --> CACHE[(Redis 冷读缓存)]
-    API --> LIMIT[令牌桶限流]
-    LIMIT --> REDIS[(Redis / 进程内回退)]
-```
-
-### 关键设计
+## 关键设计
 
 | 设计 | 说明 |
 | :--- | :--- |
