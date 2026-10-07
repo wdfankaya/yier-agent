@@ -1,0 +1,13 @@
+{
+  "engine": "httpx",
+  "users": 10,
+  "duration_s": 15.0,
+  "ok": 2640,
+  "errors": 1,
+  "rps": 176.07,
+  "p50_ms": 53.6,
+  "p95_ms": 74.1,
+  "p99_ms": 89.5,
+  "mix": "POST /api/chat SSE ×3 + GET /api/sessions ×1",
+  "note": "服务层摸底：LLM 已打桩（~20ms），不含真实模型 token 时间；限流关闭。含 LLM 的基线：先启动 python -m app.server.main，再 locust -f locustfile.py --host http://127.0.0.1:8000 --headless -u 10 -r 10 -t 30s（生产令牌桶 10 次/分钟，真模型压测会先打到 429）。"
+}

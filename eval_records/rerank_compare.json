@@ -1,0 +1,300 @@
+{
+  "backend": "numpy",
+  "embedding_model": "BAAI/bge-m3",
+  "rerank_model": "BAAI/bge-reranker-v2-m3",
+  "recall_k": 10,
+  "off": {
+    "cases": [
+      {
+        "query": "七天无理由退货可以吗",
+        "gold_doc": "退换货政策",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "退换货政策",
+            "section": "一、七天无理由退货",
+            "score": 0.8265
+          },
+          {
+            "doc": "退换货政策",
+            "section": "四、特殊场景",
+            "score": 0.7202
+          },
+          {
+            "doc": "退换货政策",
+            "section": "三、退款流程",
+            "score": 0.6979
+          }
+        ],
+        "reranked": false
+      },
+      {
+        "query": "钻石会员有哪些权益",
+        "gold_doc": "会员权益",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "会员权益",
+            "section": "二、各等级核心权益",
+            "score": 0.7001
+          },
+          {
+            "doc": "会员权益",
+            "section": "四、生日特权",
+            "score": 0.6859
+          },
+          {
+            "doc": "会员权益",
+            "section": "一、会员等级体系",
+            "score": 0.6053
+          }
+        ],
+        "reranked": false
+      },
+      {
+        "query": "偏远地区还包邮吗",
+        "gold_doc": "配送说明",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "配送说明",
+            "section": "一、配送范围",
+            "score": 0.6445
+          },
+          {
+            "doc": "配送说明",
+            "section": "三、运费规则",
+            "score": 0.6375
+          },
+          {
+            "doc": "配送说明",
+            "section": "二、配送时效",
+            "score": 0.6121
+          }
+        ],
+        "reranked": false
+      },
+      {
+        "query": "忘记密码了怎么办",
+        "gold_doc": "常见问题FAQ",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "常见问题FAQ",
+            "section": "四、账户与安全",
+            "score": 0.7055
+          },
+          {
+            "doc": "常见问题FAQ",
+            "section": "三、售后服务",
+            "score": 0.5572
+          },
+          {
+            "doc": "会员权益",
+            "section": "二、各等级核心权益",
+            "score": 0.511
+          }
+        ],
+        "reranked": false
+      },
+      {
+        "query": "退款多久到账",
+        "gold_doc": "常见问题FAQ",
+        "rank": 3,
+        "top": [
+          {
+            "doc": "退换货政策",
+            "section": "三、退款流程",
+            "score": 0.7195
+          },
+          {
+            "doc": "退换货政策",
+            "section": "四、特殊场景",
+            "score": 0.7186
+          },
+          {
+            "doc": "常见问题FAQ",
+            "section": "一、订单与支付",
+            "score": 0.7037
+          }
+        ],
+        "reranked": false
+      },
+      {
+        "query": "你们支持七天无理由退货吗？",
+        "gold_doc": "退换货政策",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "退换货政策",
+            "section": "一、七天无理由退货",
+            "score": 0.7632
+          },
+          {
+            "doc": "退换货政策",
+            "section": "四、特殊场景",
+            "score": 0.6874
+          },
+          {
+            "doc": "退换货政策",
+            "section": "二、质量问题退换货",
+            "score": 0.6422
+          }
+        ],
+        "reranked": false
+      }
+    ],
+    "metrics": {
+      "hit_at_1": 0.8333,
+      "hit_at_3": 1.0,
+      "mrr": 0.8889
+    }
+  },
+  "on": {
+    "cases": [
+      {
+        "query": "七天无理由退货可以吗",
+        "gold_doc": "退换货政策",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "退换货政策",
+            "section": "一、七天无理由退货",
+            "score": 0.9917
+          },
+          {
+            "doc": "会员权益",
+            "section": "二、各等级核心权益",
+            "score": 0.2413
+          },
+          {
+            "doc": "退换货政策",
+            "section": "四、特殊场景",
+            "score": 0.1877
+          }
+        ],
+        "reranked": true
+      },
+      {
+        "query": "钻石会员有哪些权益",
+        "gold_doc": "会员权益",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "会员权益",
+            "section": "二、各等级核心权益",
+            "score": 0.9886
+          },
+          {
+            "doc": "会员权益",
+            "section": "四、生日特权",
+            "score": 0.984
+          },
+          {
+            "doc": "配送说明",
+            "section": "三、运费规则",
+            "score": 0.9015
+          }
+        ],
+        "reranked": true
+      },
+      {
+        "query": "偏远地区还包邮吗",
+        "gold_doc": "配送说明",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "配送说明",
+            "section": "三、运费规则",
+            "score": 0.4974
+          },
+          {
+            "doc": "配送说明",
+            "section": "一、配送范围",
+            "score": 0.0914
+          },
+          {
+            "doc": "配送说明",
+            "section": "二、配送时效",
+            "score": 0.0049
+          }
+        ],
+        "reranked": true
+      },
+      {
+        "query": "忘记密码了怎么办",
+        "gold_doc": "常见问题FAQ",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "常见问题FAQ",
+            "section": "四、账户与安全",
+            "score": 0.8126
+          },
+          {
+            "doc": "常见问题FAQ",
+            "section": "三、售后服务",
+            "score": 0.0296
+          },
+          {
+            "doc": "配送说明",
+            "section": "五、收货须知",
+            "score": 0.0085
+          }
+        ],
+        "reranked": true
+      },
+      {
+        "query": "退款多久到账",
+        "gold_doc": "常见问题FAQ",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "常见问题FAQ",
+            "section": "三、售后服务",
+            "score": 0.9812
+          },
+          {
+            "doc": "常见问题FAQ",
+            "section": "一、订单与支付",
+            "score": 0.4366
+          },
+          {
+            "doc": "退换货政策",
+            "section": "四、特殊场景",
+            "score": 0.3836
+          }
+        ],
+        "reranked": true
+      },
+      {
+        "query": "你们支持七天无理由退货吗？",
+        "gold_doc": "退换货政策",
+        "rank": 1,
+        "top": [
+          {
+            "doc": "退换货政策",
+            "section": "一、七天无理由退货",
+            "score": 0.9685
+          },
+          {
+            "doc": "退换货政策",
+            "section": "四、特殊场景",
+            "score": 0.2861
+          },
+          {
+            "doc": "会员权益",
+            "section": "二、各等级核心权益",
+            "score": 0.126
+          }
+        ],
+        "reranked": true
+      }
+    ],
+    "metrics": {
+      "hit_at_1": 1.0,
+      "hit_at_3": 1.0,
+      "mrr": 1.0
+    }
+  }
+}

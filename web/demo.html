@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>一二 · 调试台</title>
+  <style>
+    :root {
+      --bg: #14120f;
+      --panel: #1e1b16;
+      --line: #3a3429;
+      --text: #f3ead8;
+      --muted: #9a8f7a;
+      --accent: #e8a317;
+      --ok: #7dbe6a;
+      --bad: #d96b5c;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      font: 14px/1.5 "Segoe UI", "PingFang SC", sans-serif;
+      background: var(--bg);
+      color: var(--text);
+    }
+    header {
+      padding: 16px 20px;
+      border-bottom: 1px solid var(--line);
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+      gap: 12px;
+    }
+    header h1 { margin: 0; font-size: 16px; font-weight: 600; }
+    header p { margin: 0; color: var(--muted); font-size: 12px; }
+    main { max-width: 860px; margin: 0 auto; padding: 16px 20px 32px; }
+    .ids { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 12px; }
+    .ids label { color: var(--muted); font-size: 12px; display: flex; gap: 6px; align-items: center; }
+    input, textarea, button {
+      font: inherit;
+      border-radius: 8px;
+      border: 1px solid var(--line);
+      background: var(--panel);
+      color: var(--text);
+    }
+    input { padding: 6px 8px; min-width: 180px; }
+    #log {
+      min-height: 360px;
+      max-height: 56vh;
+      overflow: auto;
+      padding: 12px;
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+    }
+    .ev { margin: 0 0 8px; padding-left: 8px; border-left: 3px solid var(--line); }
+    .ev.thought { border-color: #6b8cae; }
+    .ev.tool { border-color: var(--accent); }
+    .ev.final { border-color: var(--ok); }
+    .ev.error { border-color: var(--bad); }
+    .ev .k { color: var(--muted); font-size: 11px; text-transform: uppercase; }
+    #confirm {
+      display: none;
+      margin: 12px 0;
+      padding: 12px;
+      border: 1px solid var(--accent);
+      border-radius: 10px;
+      background: #2a2214;
+    }
+    #confirm strong { color: var(--accent); }
+    .row { display: flex; gap: 8px; margin-top: 12px; }
+    textarea { flex: 1; min-height: 64px; padding: 8px 10px; resize: vertical; }
+    button { padding: 8px 14px; cursor: pointer; }
+    button.primary { background: var(--accent); color: #1a1408; border-color: var(--accent); font-weight: 600; }
+    button.danger { background: var(--bad); color: #fff; border-color: var(--bad); }
+    button:disabled { opacity: 0.5; cursor: not-allowed; }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>一二商城 · 一二调试台</h1>
+    <p>POST SSE 事件流 · HITL 确认按钮（非产品页）</p>
+  </header>
+  <main>
+    <div class="ids">
+      <label>session <input id="sid" /></label>
+      <label>user <input id="uid" value="demo-user" /></label>
+    </div>
+    <div id="log"></div>
+    <div id="confirm">
+      <div>即将执行 <strong id="c-tool"></strong> · 订单 <strong id="c-order"></strong> · 金额 <strong id="c-amt"></strong></div>
+      <div class="row">
+        <button class="primary" id="btn-yes" type="button">确认退款</button>
+        <button class="danger" id="btn-no" type="button">拒绝</button>
+      </div>
+    </div>
+    <div class="row">
+      <textarea id="msg" placeholder="例如：订单 ORD-20240120-002 不想要了，帮我退款"></textarea>
+      <button class="primary" id="send" type="button">发送</button>
+    </div>
+  </main>
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const sidEl = $("sid");
+    const uidEl = $("uid");
+    const logEl = $("log");
+    const msgEl = $("msg");
+    const sendBtn = $("send");
+    const confirmBox = $("confirm");
+    let pendingToken = null;
+
+    sidEl.value = localStorage.getItem("yier-demo-sid") || ("demo-" + Math.random().toString(16).slice(2, 10));
+    sidEl.addEventListener("change", () => localStorage.setItem("yier-demo-sid", sidEl.value));
+    localStorage.setItem("yier-demo-sid", sidEl.value);
+
+    function addEv(type, html) {
+      const d = document.createElement("div");
+      d.className = "ev " + type;
+      d.innerHTML = html;
+      logEl.appendChild(d);
+      logEl.scrollTop = logEl.scrollHeight;
+    }
+
+    function hideConfirm() {
+      confirmBox.style.display = "none";
+      pendingToken = null;
+    }
+
+    function showConfirm(ev) {
+      pendingToken = ev.confirm_token;
+      $("c-tool").textContent = ev.tool || "";
+      $("c-order").textContent = ev.order_id || "";
+      $("c-amt").textContent = ev.amount != null ? ("¥" + ev.amount) : "未知";
+      confirmBox.style.display = "block";
+    }
+
+    async function readSse(res) {
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buf = "";
+      while (true) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        buf += decoder.decode(value, { stream: true });
+        const parts = buf.split("\n\n");
+        buf = parts.pop();
+        for (const p of parts) {
+          const line = p.split("\n").find((l) => l.startsWith("data: "));
+          if (!line) continue;
+          let ev;
+          try { ev = JSON.parse(line.slice(6)); } catch { continue; }
+          handle(ev);
+        }
+      }
+    }
+
+    function handle(ev) {
+      const t = ev.type;
+      if (t === "thought") addEv("thought", `<div class="k">thought</div>${esc(ev.content || "")}`);
+      else if (t === "route") addEv("tool", `<div class="k">route</div>${esc(ev.agent || "")}`);
+      else if (t === "tool_call") addEv("tool", `<div class="k">tool_call</div>${esc(ev.name)} ${esc(JSON.stringify(ev.arguments || {}))}`);
+      else if (t === "tool_result") addEv("tool", `<div class="k">tool_result</div><pre style="white-space:pre-wrap;margin:4px 0 0">${esc(ev.content || "")}</pre>`);
+      else if (t === "confirm_required") {
+        addEv("tool", `<div class="k">confirm_required</div>订单 ${esc(ev.order_id)} 金额 ${ev.amount != null ? "¥" + ev.amount : "?"}`);
+        showConfirm(ev);
+      }
+      else if (t === "final") addEv("final", `<div class="k">final · ${esc(ev.intent || "")}</div>${esc(ev.reply || "")}`);
+      else if (t === "error") addEv("error", `<div class="k">error</div>${esc(ev.message || "")}`);
+    }
+
+    function esc(s) {
+      return String(s).replace(/[&<>"]/g, (c) => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;" }[c]));
+    }
+
+    $("send").onclick = async () => {
+      const message = msgEl.value.trim();
+      if (!message) return;
+      sendBtn.disabled = true;
+      addEv("thought", `<div class="k">you</div>${esc(message)}`);
+      msgEl.value = "";
+      try {
+        const res = await fetch("/api/chat", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sidEl.value, user_id: uidEl.value, message }),
+        });
+        if (res.status === 429) {
+          addEv("error", `<div class="k">error</div>429 限流，请稍后再试`);
+          return;
+        }
+        if (!res.ok) {
+          addEv("error", `<div class="k">error</div>HTTP ${res.status}`);
+          return;
+        }
+        await readSse(res);
+      } catch (e) {
+        addEv("error", `<div class="k">error</div>${esc(e.message || e)}`);
+      } finally {
+        sendBtn.disabled = false;
+      }
+    };
+
+    async function decide(approved) {
+      if (!pendingToken) return;
+      const token = pendingToken;
+      hideConfirm();
+      try {
+        const res = await fetch("/api/confirm", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ session_id: sidEl.value, user_id: uidEl.value, token, approved }),
+        });
+        const body = await res.json().catch(() => ({}));
+        if (!res.ok) {
+          addEv("error", `<div class="k">confirm</div>HTTP ${res.status} ${esc(JSON.stringify(body))}`);
+          return;
+        }
+        addEv("final", `<div class="k">confirm</div>${approved ? "已批准并执行" : "已拒绝"} ${esc(JSON.stringify(body.result || body))}`);
+      } catch (e) {
+        addEv("error", `<div class="k">confirm</div>${esc(e.message || e)}`);
+      }
+    }
+    $("btn-yes").onclick = () => decide(true);
+    $("btn-no").onclick = () => decide(false);
+    msgEl.addEventListener("keydown", (e) => {
+      if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
+    });
+  </script>
+</body>
+</html>
