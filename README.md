@@ -34,8 +34,6 @@
 
 ## 关键设计
 
-![一二智能客服架构概览](docs/assets/architecture.svg)
-
 | 设计 | 说明 |
 | :--- | :--- |
 | 入口复用 | CLI 与 HTTP 共用 Agent 实现，HTTP 通过异步调用与事件回调输出 SSE |
