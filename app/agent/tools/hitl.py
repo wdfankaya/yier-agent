@@ -3,7 +3,7 @@
 敏感工具在执行前检查用户授权，确认状态由会话独立管理。
 本闸挂在 ToolManager 上，按会话隔离：
 - 未授权：不执行，返回 confirm_required + token（SSE 另推事件）
-- 授权后：本会话该订单进白名单，不再二次确认
+- 授权后：仅允许已展示参数执行一次；同参数重试返回记录的结果
 - 拒绝后：本会话该订单进黑名单，直接 denied
 
 HTTP `POST /api/confirm` 或用户短回复「确认」/「拒绝」都会改闸门。
@@ -14,6 +14,9 @@ from __future__ import annotations
 import json
 import re
 import uuid
+import time
+import threading
+from copy import deepcopy
 from typing import Optional
 
 from app.agent.tools.mock_data import ORDERS
@@ -29,98 +32,110 @@ _NO = re.compile(
 
 
 class ConfirmationGate:
-    """一个会话一把闸。"""
+    """Immutable, expiring, single-use approvals for exact tool arguments."""
 
-    def __init__(self) -> None:
-        self.pending: dict[str, dict] = {}
-        self.allowed_orders: set[str] = set()
-        self.denied_orders: set[str] = set()
+    def __init__(self):
+        self.pending = {}
+        self.denied_orders = set()
+        self._grants = set()
+        self._results = {}
+        self._lock = threading.RLock()
 
-    def reset(self) -> None:
-        self.pending.clear()
-        self.allowed_orders.clear()
-        self.denied_orders.clear()
+    @staticmethod
+    def key(name, arguments):
+        return json.dumps([name, arguments], sort_keys=True, ensure_ascii=False)
 
-    def intercept(self, name: str, arguments: dict) -> Optional[dict]:
-        """需要拦住时返回给 LLM 的 dict；放行返回 None。"""
+    def reset(self):
+        with self._lock:
+            self.pending.clear()
+            self.denied_orders.clear()
+            self._grants.clear()
+            self._results.clear()
+
+    def _expire(self):
+        for token, payload in list(self.pending.items()):
+            if payload["expires"] <= time.monotonic():
+                del self.pending[token]
+
+    def intercept(self, name, arguments):
         from app.config.settings import settings
         if not settings.hitl_enabled:
             return None
-        order_id = str(arguments.get("order_id") or "")
-        if order_id in self.denied_orders:
-            return {
-                "status": "denied",
-                "tool": name,
-                "order_id": order_id,
-                "message": "您已拒绝本会话内对该订单的退款。如需重新办理，请新开一个会话。",
-            }
-        if order_id in self.allowed_orders:
-            return None
-        for tok, p in self.pending.items():
-            if p.get("order_id") == order_id and p.get("tool") == name:
-                p["args"] = dict(arguments)
-                return {
-                    "status": "confirm_required",
-                    "tool": name,
-                    "args": dict(arguments),
-                    "confirm_token": tok,
-                    "order_id": order_id,
-                    "amount": p.get("amount"),
-                }
-        token = uuid.uuid4().hex
-        amount = None
-        order = ORDERS.get(order_id)
-        if order:
-            amount = order.get("total")
-        payload = {
-            "tool": name,
-            "args": dict(arguments),
-            "order_id": order_id,
-            "amount": amount,
-        }
-        self.pending[token] = payload
-        return {
-            "status": "confirm_required",
-            "tool": name,
-            "args": dict(arguments),
-            "confirm_token": token,
-            "order_id": order_id,
-            "amount": amount,
-        }
+        with self._lock:
+            self._expire()
+            key = self.key(name, arguments)
+            order_id = str(arguments.get("order_id") or "")
+            if key in self._results:
+                return deepcopy(self._results[key])
+            if key in self._grants:
+                self._grants.remove(key)
+                # Until recorded, retries must not issue another side effect.
+                self._results[key] = {"status": "execution_unknown", "message": "操作正在执行或结果未知，请核实状态，不要重复提交"}
+                return None
+            if order_id in self.denied_orders:
+                return {"status": "denied", "tool": name, "order_id": order_id}
+            for token, payload in list(self.pending.items()):
+                if payload["tool"] == name and payload["order_id"] == order_id:
+                    if payload["key"] == key:
+                        return self._event(token, payload)
+                    # Changed arguments invalidate the previously displayed button.
+                    del self.pending[token]
+            token = uuid.uuid4().hex
+            payload = {"tool": name, "args": deepcopy(arguments), "order_id": order_id,
+                       "amount": ORDERS.get(order_id, {}).get("total"), "key": key,
+                       "expires": time.monotonic() + settings.hitl_token_ttl}
+            self.pending[token] = payload
+            return self._event(token, payload)
 
-    def resolve(self, token: str, approved: bool) -> dict:
-        pending = self.pending.pop(token, None)
-        if pending is None:
-            return {"ok": False, "error": "确认令牌无效或已使用"}
-        order_id = pending["order_id"]
-        if approved:
-            self.allowed_orders.add(order_id)
-            self.denied_orders.discard(order_id)
-        else:
-            self.denied_orders.add(order_id)
-            self.allowed_orders.discard(order_id)
-        return {
-            "ok": True,
-            "approved": approved,
-            "order_id": order_id,
-            "tool": pending["tool"],
-            "args": pending["args"],
-            "amount": pending.get("amount"),
-        }
+    @staticmethod
+    def _event(token, payload):
+        return {"status": "confirm_required", "confirm_token": token,
+                **{k: deepcopy(payload[k]) for k in ("tool", "args", "order_id", "amount")}}
 
-    def consume_utterance(self, text: str) -> Optional[str]:
-        """有待确认时，短回复「确认」/「拒绝」直接改闸。返回 approved/denied，否则 None。"""
-        if not self.pending:
+    def resolve(self, token, approved):
+        with self._lock:
+            self._expire()
+            payload = self.pending.pop(token, None)
+            if payload is None:
+                return {"ok": False, "error": "确认令牌无效、过期或已使用；服务重启后需重新发起确认"}
+            if approved:
+                self._grants.add(payload["key"])
+            else:
+                self.denied_orders.add(payload["order_id"])
+            return {"ok": True, "approved": approved,
+                    **{k: deepcopy(payload[k]) for k in ("tool", "args", "order_id", "amount")}}
+
+    def record(self, name, arguments, result):
+        with self._lock:
+            key = self.key(name, arguments)
+            if key in self._results:
+                self._results[key] = deepcopy(result)
+
+    def utterance(self, text):
+        with self._lock:
+            self._expire()
+            # A bare yes must never select an arbitrary order.
+            if len(self.pending) != 1:
+                return None
+            t = (text or "").strip()
+            if _YES.fullmatch(t):
+                return next(iter(self.pending)), True
+            if _NO.fullmatch(t):
+                return next(iter(self.pending)), False
             return None
-        t = (text or "").strip()
-        tok = next(iter(self.pending))
-        if _YES.match(t):
-            self.resolve(tok, True)
-            return "approved"
-        if _NO.match(t):
-            self.resolve(tok, False)
-            return "denied"
-        return None
+
+    def consume_utterance(self, text):
+        choice = self.utterance(text)
+        if choice is None:
+            return None
+        info = self.resolve(*choice)
+        return ("approved" if choice[1] else "denied") if info["ok"] else None
+
+
+def resolve_utterance_on_agent(agent, text):
+    choice = agent.hitl.utterance(text)
+    if choice is not None:
+        return resolve_on_agent(agent, *choice)
 
 
 def notify_confirm_required(

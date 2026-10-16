@@ -107,7 +107,8 @@ def test_http_429():
         from fastapi.testclient import TestClient
         from app.server.main import app
 
-        with TestClient(app) as client:
+        from unittest.mock import patch
+        with patch.object(settings, "api_tokens", {"u-rl": "t" * 40}), TestClient(app, headers={"Authorization": "Bearer " + "t" * 40}) as client:
             r = client.post(
                 "/api/chat",
                 json={"session_id": "rl", "user_id": "u-rl", "message": "hi"},

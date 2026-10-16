@@ -1,17 +1,20 @@
 """HTTP API 的请求/响应模型（Pydantic）。"""
 
-from typing import Optional
+from typing import Optional, Annotated
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, AfterValidator
+from app.server.identifiers import validate_id
+
+Identifier = Annotated[str, AfterValidator(validate_id)]
 
 
 class ConfirmRequest(BaseModel):
     """POST /api/confirm：对 confirm_required 事件做批准 / 拒绝。"""
 
-    session_id: str = Field(..., description="与 /api/chat 同一会话 ID")
+    session_id: Identifier = Field(..., description="与 /api/chat 同一会话 ID")
     token: str = Field(..., min_length=1, description="confirm_required 事件里的 confirm_token")
     approved: bool = Field(..., description="true=批准并当场执行；false=本会话拒绝该订单")
-    user_id: str = Field("default", description="重启后恢复会话时用；热态命中可省略")
+    user_id: Optional[Identifier] = Field(None, description="可省略；提供时必须与访问令牌身份一致")
 
 
 class ConfirmResponse(BaseModel):
@@ -30,9 +33,9 @@ class ConfirmResponse(BaseModel):
 class ChatRequest(BaseModel):
     """POST /api/chat 请求体。"""
 
-    session_id: str = Field(..., description="会话 ID：同一会话的连续轮次传同一值")
-    user_id: str = Field("default", description="用户 ID：长期记忆按它隔离")
-    message: str = Field(..., min_length=1, description="用户本轮输入")
+    session_id: Identifier = Field(..., description="会话 ID：同一会话的连续轮次传同一值")
+    user_id: Optional[Identifier] = Field(None, description="可省略；身份由访问令牌决定")
+    message: str = Field(..., min_length=1, max_length=16000, description="用户本轮输入")
 
 
 class SessionMessagesResponse(BaseModel):

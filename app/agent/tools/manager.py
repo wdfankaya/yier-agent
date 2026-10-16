@@ -27,7 +27,7 @@ class ToolManager:
         skill_manager:  本 Agent 的 SkillManager（可为 None，此时 load_skill 未启用）。
     """
 
-    # 敏感操作执行前走 ConfirmationGate（会话级白名单 / 黑名单）。
+    # 敏感操作执行前走 ConfirmationGate（精确参数、单次授权）。
     SENSITIVE_TOOLS: set[str] = {"apply_refund"}
 
     def is_sensitive(self, name: str) -> bool:
@@ -118,16 +118,28 @@ class ToolManager:
         source = self._tool_source.get(name)
 
         if source == "mcp" and self._mcp_client:
-            return self._mcp_client.call_tool(name, arguments)
+            raw = self._mcp_client.call_tool(name, arguments)
+            self._record_result(name, arguments, raw)
+            return raw
 
         if source == "local":
             # 把本 Agent 的 memory/skill manager 绑定到调用上下文，
             # recall_user_memory / load_skill 才能拿到「本会话用户」的实例。
             with bind_memory_manager(self.memory_manager), \
                  bind_skill_manager(self.skill_manager):
-                return local_execute_tool(name, arguments)
+                raw = local_execute_tool(name, arguments)
+                self._record_result(name, arguments, raw)
+                return raw
 
         return json.dumps({"error": f"未知工具: {name}"}, ensure_ascii=False)
+
+    def _record_result(self, name, arguments, raw):
+        if self.hitl is not None and self.is_sensitive(name):
+            try:
+                result = json.loads(raw)
+            except (ValueError, TypeError):
+                result = {"raw": raw}
+            self.hitl.record(name, arguments, result)
 
     async def aexecute_tool(self, name: str, arguments: dict) -> str:
         """同步工具下沉线程池；asyncio.wait_for 10s 超时。"""

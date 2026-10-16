@@ -42,7 +42,8 @@ class LongTermMemory:
 
     @property
     def memory_path(self) -> Path:
-        return self.memory_dir / f"{self.user_id}.json"
+        from app.server.identifiers import validate_id, safe_path
+        return safe_path(self.memory_dir, f"{validate_id(self.user_id)}.json")
 
     def load(self) -> None:
         """从持久层加载用户的长期记忆（PG 或 JSON）。"""

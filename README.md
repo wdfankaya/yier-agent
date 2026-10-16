@@ -114,13 +114,26 @@ CLI 支持 `skills`、`memory`、`reset`、`quit` 命令。退款演示使用示
 
 ## HTTP 服务
 
-完成基础配置和索引构建后启动：
+完成基础配置和索引构建后，为 HTTP 接口配置访问令牌。先生成一个随机令牌：
+
+```bash
+python -c "import secrets; print(secrets.token_urlsafe(32))"
+```
+
+在本地 `.env` 中填入生成结果（不要提交真实令牌）：
+
+```dotenv
+API_TOKENS={"u1":"替换成生成的随机令牌"}
+HITL_TOKEN_TTL=300
+```
+
+每个用户使用不同的令牌，至少 32 字符；空配置会拒绝 API 请求。身份由令牌决定，请求中的 `user_id` 可省略；提供时必须与令牌身份一致。对外部署需通过 HTTPS 传输令牌。随后启动：
 
 ```bash
 python -m app.server.main
 ```
 
-打开 **[本地对话调试页](http://127.0.0.1:8000/demo)**，查看 SSE 事件和退款确认交互。
+打开 **[本地对话调试页](http://127.0.0.1:8000/demo)**，输入访问令牌后查看 SSE 事件和退款确认交互。令牌不会写入浏览器本地存储。
 
 | 方法 | 路径 | 用途 |
 | :--- | :--- | :--- |
@@ -135,10 +148,18 @@ python -m app.server.main
 <summary><strong>请求示例 · Bash / curl</strong></summary>
 
 ```bash
+# 先将本地令牌赋给 YIER_API_TOKEN 环境变量
 curl -N -X POST http://127.0.0.1:8000/api/chat \
   -H 'Content-Type: application/json' \
-  -d '{"session_id":"demo","user_id":"u1","message":"我的订单还没发货，怎么回事？"}'
+  -H "Authorization: Bearer $YIER_API_TOKEN" \
+  -d '{"session_id":"demo","message":"我的订单还没发货，怎么回事？"}'
 ```
+
+所有 `/api/*` 请求都需携带 `Authorization: Bearer <令牌>`。ID 仅允许 1–64 位英文字母、数字、下划线和连字符，禁止系统保留名。
+
+同一用户的同一会话正在处理时，聊天、确认、读取和删除请求返回 `409`。客户端断开 SSE 后，已接受的轮次继续完成并保存；请等待完成后读取历史，避免立即重发。
+
+确认令牌绑定工具和完整参数，默认 5 分钟过期、只能使用一次；参数变化会使旧令牌失效。同参数执行结果在当前会话中复用。服务重启后旧确认令牌失效，需要重新确认。
 
 事件类型包括 `session`、`route`（多 Agent 模式）、`thought`、`tool_call`、`tool_result`、`confirm_required`、`final` 和 `error`。SSE 按处理事件输出，并非逐 token 输出。
 
@@ -234,12 +255,18 @@ yier-agent/
 
 ## 实现边界
 
-- **部署与并发**：当前使用单 worker 和进程内会话注册表；同一会话应串行发送请求。多 worker 部署需要重新设计状态加载与并发控制。
+- **部署与并发**：当前使用单 worker 和进程内会话注册表；同一用户的同一会话由服务端互斥控制，冲突返回 409。多 worker 部署需要重新设计状态加载与并发控制。
 - **持久化与缓存**：`DB_ENABLED=false` 时使用 JSON；数据库模式下 PostgreSQL 持久化、Redis 加速冷读。内存限流回退仅适用于单进程。
 - **词项检索**：PostgreSQL 使用原生全文检索与 `ts_rank`，不是 BM25；`simple` 配置无法对连续中文有效分词，中文查询主要依赖向量召回。
 - **Agent 路由**：每轮交给一个子 Agent 处理，未实现子 Agent 间讨论或接力。
-- **业务数据**：订单和退款工具使用示例数据，未接入真实支付系统。
+- **业务数据**：订单和退款工具使用示例数据，未接入真实支付系统。确认与执行结果去重状态仅在内存中；接入真实支付前，还需实现持久化业务幂等键、订单归属校验和结果对账，不能将本会话内去重当作支付级幂等保证。
 
 ## 许可
 
 版权和使用范围见 [LICENSE](LICENSE) 与 [授权条款](授权条款.md)。
+
+HTTP 安全与中断恢复回归测试（不调用真实模型或数据库）：
+
+```bash
+python -m unittest tests.test_security_regressions -v
+```

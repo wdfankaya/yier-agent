@@ -107,7 +107,7 @@ async def _httpx_baseline(host: str, users: int, duration: float) -> dict:
         sid = f"bl-{i}"
         uid = f"bu-{i}"
         n = 0
-        async with httpx.AsyncClient(timeout=30.0) as client:
+        async with httpx.AsyncClient(timeout=30.0, headers={"Authorization": "Bearer " + settings.api_tokens[uid]}) as client:
             while time.perf_counter() < stop_at:
                 t0 = time.perf_counter()
                 try:
@@ -181,6 +181,9 @@ def main() -> int:
     settings.ltm_consolidate_every = 0
     settings.multi_agent_enabled = False
     settings.history_threshold = 1000
+    import secrets
+    old_tokens = settings.api_tokens
+    settings.api_tokens = {f"bu-{i}": secrets.token_urlsafe(32) for i in range(users)}
     reset_limiter()
     orig = _patch_registry()
     port = _free_port()
@@ -226,6 +229,7 @@ def main() -> int:
     finally:
         server.should_exit = True
         thread.join(timeout=5)
+        settings.api_tokens = old_tokens
         SessionRegistry._build_agent = orig  # type: ignore[method-assign]
         (
             settings.db_enabled,

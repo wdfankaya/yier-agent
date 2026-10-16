@@ -9,6 +9,8 @@ from typing import Optional
 from openai import AsyncOpenAI
 
 from app.agent.async_utils import run_sync
+from app.agent.history import guarded_turn
+from app.agent.tools.hitl import resolve_utterance_on_agent
 from app.agent.resilience import llm_create, llm_parse
 from app.agent.storage import delete_session, load_session, save_session
 from app.agent.summarizer import summarize
@@ -113,9 +115,10 @@ class MultiAgentOrchestrator:
         finally:
             self._ephemeral_loop = False
 
+    @guarded_turn
     async def achat(self, user_input: str) -> CustomerServiceResponse:
         """路由 → 子 Agent 执行 → 结构化提取 → 返回结果。"""
-        self.hitl.consume_utterance(user_input)
+        await asyncio.to_thread(resolve_utterance_on_agent, self, user_input)
         self.raw_messages.append({"role": "user", "content": user_input})
 
         agent_key = await self.router.aroute(user_input, self.raw_messages)

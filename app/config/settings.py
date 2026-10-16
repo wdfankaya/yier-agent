@@ -66,6 +66,10 @@ class Settings(BaseSettings):
     # 强杀进程最多丢这 N 轮；优雅关闭仍会再 consolidate 一次。
     ltm_consolidate_every: int = 3
 
+    # Server-side mapping: user ID -> private bearer token. Empty disables API access.
+    api_tokens: dict[str, str] = {}
+    hitl_token_ttl: float = 300.0
+
     # HTTP 按 user_id 令牌桶（10 次/分钟）；LLM 超时/重试；工具超时
     rate_limit_enabled: bool = True
     rate_limit_per_minute: int = 10

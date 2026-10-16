@@ -1,7 +1,7 @@
 """Locust 压测场景。
 
 任务配比：对话 SSE（读到流结束）: 查历史 = 3:1。
-每个虚拟用户有自己的 session_id / user_id，避免热会话互相覆盖 on_event。
+每个虚拟用户有独立 session_id；LOAD_TEST_TOKEN 必须是服务端配置的测试用户令牌。
 
 用法（先起服务）：
   .venv/Scripts/python -m app.server.main
@@ -15,6 +15,7 @@ from __future__ import annotations
 
 import json
 import uuid
+import os
 
 from locust import HttpUser, between, task
 
@@ -38,7 +39,8 @@ class YierUser(HttpUser):
     def on_start(self):
         suffix = uuid.uuid4().hex[:8]
         self.session_id = f"locust-{suffix}"
-        self.user_id = f"lu-{suffix}"
+        token = os.environ["LOAD_TEST_TOKEN"]
+        self.client.headers.update({"Authorization": "Bearer " + token})
 
     @task(3)
     def chat_sse(self):
@@ -46,7 +48,6 @@ class YierUser(HttpUser):
             "/api/chat",
             json={
                 "session_id": self.session_id,
-                "user_id": self.user_id,
                 "message": "你好，在吗",
             },
             name="POST /api/chat (SSE)",

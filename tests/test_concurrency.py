@@ -134,6 +134,9 @@ async def test_http_10():
     settings.rate_limit_enabled = False
     settings.ltm_consolidate_every = 0
     settings.multi_agent_enabled = False
+    import secrets
+    old_tokens = settings.api_tokens
+    settings.api_tokens = {f"u10-{i}": secrets.token_urlsafe(32) for i in range(N)}
     reset_limiter()
     orig = _patch_registry()
     port = _free_port()
@@ -164,7 +167,7 @@ async def test_http_10():
         async def one_user(i: int) -> None:
             sid = f"c10-{i}"
             uid = f"u10-{i}"
-            async with httpx.AsyncClient(timeout=30.0) as client:
+            async with httpx.AsyncClient(timeout=30.0, headers={"Authorization": "Bearer " + settings.api_tokens[uid]}) as client:
                 for t in range(TURNS):
                     resp = await client.post(
                         f"http://127.0.0.1:{port}/api/chat",
@@ -211,6 +214,7 @@ async def test_http_10():
         server.should_exit = True
         thread.join(timeout=5)
         from app.server.sessions import SessionRegistry
+        settings.api_tokens = old_tokens
         SessionRegistry._build_agent = orig  # type: ignore[method-assign]
         (
             settings.db_enabled,

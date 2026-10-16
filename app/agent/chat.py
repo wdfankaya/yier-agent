@@ -5,6 +5,8 @@ from typing import Optional
 from openai import AsyncOpenAI
 
 from app.agent.async_utils import run_sync
+from app.agent.history import guarded_turn
+from app.agent.tools.hitl import resolve_utterance_on_agent
 from app.agent.resilience import llm_create, llm_parse
 from app.agent.storage import delete_session, load_session, save_session
 from app.agent.summarizer import summarize
@@ -91,9 +93,10 @@ class YierAgent:
         finally:
             self._ephemeral_loop = False
 
+    @guarded_turn
     async def achat(self, user_input: str) -> CustomerServiceResponse:
         """处理用户输入：ReAct 循环 → 结构化提取 → 返回结果（async）。"""
-        self.hitl.consume_utterance(user_input)
+        await asyncio.to_thread(resolve_utterance_on_agent, self, user_input)
         self.raw_messages.append({"role": "user", "content": user_input})
 
         final_text = await self._react_loop()

@@ -19,21 +19,23 @@ import threading
 from pathlib import Path
 
 from app.config.settings import settings
+from app.server.identifiers import validate_id, safe_path
 
 SESSION_DIR = Path("app/sessions/server")
 
 
 def session_path_for(user_id: str, session_id: str) -> str:
     """生成会话存储路径；数据库模式下用作会话键。"""
-    return str(SESSION_DIR / user_id / f"{session_id}.json")
+    return str(safe_path(SESSION_DIR, validate_id(user_id), f"{validate_id(session_id)}.json"))
 
 
 class SessionRegistry:
     """进程内常驻 Agent 的注册表。加锁保护 dict（FastAPI 线程池会并发访问）。"""
 
     def __init__(self) -> None:
-        self._agents: dict[str, object] = {}
-        self._user_of: dict[str, str] = {}
+        self._agents: dict[tuple[str, str], object] = {}
+        self._busy: set[tuple[str, str]] = set()
+        self._busy_lock = threading.Lock()
         self._lock = threading.RLock()
 
     # ---------- 构造 ----------
@@ -51,63 +53,52 @@ class SessionRegistry:
             user_id=user_id,
         )
 
-    # ---------- 读写 ----------
-    def get(self, session_id: str):
-        """返回常驻 agent；不存在返回 None（不自动构造）。"""
+    def _key(self, session_id: str, user_id: str):
+        return validate_id(user_id), validate_id(session_id)
+
+    def acquire(self, session_id: str, user_id: str) -> bool:
+        key = self._key(session_id, user_id)
+        with self._busy_lock:
+            if key in self._busy:
+                return False
+            self._busy.add(key)
+            return True
+
+    def release(self, session_id: str, user_id: str) -> None:
+        with self._busy_lock:
+            self._busy.discard(self._key(session_id, user_id))
+
+    def get(self, session_id: str, user_id: str):
         with self._lock:
-            return self._agents.get(session_id)
+            return self._agents.get(self._key(session_id, user_id))
 
     def get_or_create(self, session_id: str, user_id: str):
-        """会话存在则返回常驻热态；否则按其历史（Redis 冷缓存 / PG / JSON）构造并驻留。"""
+        key = self._key(session_id, user_id)
         with self._lock:
-            agent = self._agents.get(session_id)
-            if agent is not None:
-                return agent
-            agent = self._build_agent(session_id, user_id)
-            self._agents[session_id] = agent
-            self._user_of[session_id] = user_id
+            agent = self._agents.get(key)
+            if agent is None:
+                agent = self._build_agent(session_id, user_id)
+                self._agents[key] = agent
             return agent
 
-    def _restore_from_disk(self, session_id: str):
-        """服务重启后：找回该会话的归属用户并重建驻留。
-
-        DB 模式：GET/DELETE 只带 session_id、没带 user_id，
-        到 PG 里查最近活跃的该 session_key 归属谁，再按 (user, key) 重建。
-        重建时 Agent.__init__ → load_session：先查 Redis，未命中再回源 PG。
-        回退模式：按 JSON 文件布局反推用户。
-        """
-        if settings.db_enabled:
-            from app.server.repository import sync_find_session_owner
-            user_id = sync_find_session_owner(session_id)
-            if user_id is None:
-                return None
-            return self.get_or_create(session_id, user_id)
-
-        hits = list(SESSION_DIR.glob(f"*/{session_id}.json"))
-        if not hits:
-            return None
-        user_id = hits[0].parent.name
-        return self.get_or_create(session_id, user_id)
-
-    def get_or_restore(self, session_id: str):
-        """取常驻 agent；无则尝试从磁盘恢复。返回 (agent, user_id) 或 None。"""
+    def get_or_restore(self, session_id: str, user_id: str):
+        key = self._key(session_id, user_id)
         with self._lock:
-            agent = self._agents.get(session_id)
+            agent = self._agents.get(key)
             if agent is not None:
-                return agent, self._user_of.get(session_id, "default")
-        restored = self._restore_from_disk(session_id)
-        if restored is None:
-            return None
-        return restored, self._user_of.get(session_id, "default")
+                return agent, user_id
+            if settings.db_enabled:
+                from app.server.repository import sync_load_session_state
+                exists = sync_load_session_state(user_id, session_id) is not None
+            else:
+                exists = Path(session_path_for(user_id, session_id)).is_file()
+            if not exists:
+                return None
+            return self.get_or_create(session_id, user_id), user_id
 
-    def remove(self, session_id: str) -> bool:
-        """摘除常驻 agent（不删历史文件）。"""
+    def remove(self, session_id: str, user_id: str) -> bool:
         with self._lock:
-            if session_id not in self._agents:
-                return False
-            del self._agents[session_id]
-            self._user_of.pop(session_id, None)
-            return True
+            return self._agents.pop(self._key(session_id, user_id), None) is not None
 
     # ---------- 生命周期 ----------
     async def close_all(self, timeout: float = 5.0) -> None:
@@ -119,7 +110,6 @@ class SessionRegistry:
         with self._lock:
             agents = list(self._agents.values())
             self._agents.clear()
-            self._user_of.clear()
 
         for agent in agents:
             closer = getattr(agent, "aclose", None)

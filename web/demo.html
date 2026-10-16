@@ -83,11 +83,12 @@
   <main>
     <div class="ids">
       <label>session <input id="sid" /></label>
-      <label>user <input id="uid" value="demo-user" /></label>
+      <label>访问令牌 <input id="api-token" type="password" autocomplete="off" placeholder="输入服务端配置的令牌" /></label>
     </div>
     <div id="log"></div>
     <div id="confirm">
       <div>即将执行 <strong id="c-tool"></strong> · 订单 <strong id="c-order"></strong> · 金额 <strong id="c-amt"></strong></div>
+      <div id="c-args"></div>
       <div class="row">
         <button class="primary" id="btn-yes" type="button">确认退款</button>
         <button class="danger" id="btn-no" type="button">拒绝</button>
@@ -101,7 +102,8 @@
   <script>
     const $ = (id) => document.getElementById(id);
     const sidEl = $("sid");
-    const uidEl = $("uid");
+    const tokenEl = $("api-token");
+    let pendingSession = null;
     const logEl = $("log");
     const msgEl = $("msg");
     const sendBtn = $("send");
@@ -127,8 +129,10 @@
 
     function showConfirm(ev) {
       pendingToken = ev.confirm_token;
+      pendingSession = sidEl.value;
       $("c-tool").textContent = ev.tool || "";
       $("c-order").textContent = ev.order_id || "";
+      $("c-args").textContent = JSON.stringify(ev.args || {});
       $("c-amt").textContent = ev.amount != null ? ("¥" + ev.amount) : "未知";
       confirmBox.style.display = "block";
     }
@@ -180,8 +184,8 @@
       try {
         const res = await fetch("/api/chat", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sidEl.value, user_id: uidEl.value, message }),
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tokenEl.value.trim() },
+          body: JSON.stringify({ session_id: sidEl.value, message }),
         });
         if (res.status === 429) {
           addEv("error", `<div class="k">error</div>429 限流，请稍后再试`);
@@ -202,18 +206,18 @@
     async function decide(approved) {
       if (!pendingToken) return;
       const token = pendingToken;
-      hideConfirm();
       try {
         const res = await fetch("/api/confirm", {
           method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ session_id: sidEl.value, user_id: uidEl.value, token, approved }),
+          headers: { "Content-Type": "application/json", "Authorization": "Bearer " + tokenEl.value.trim() },
+          body: JSON.stringify({ session_id: pendingSession, token, approved }),
         });
         const body = await res.json().catch(() => ({}));
         if (!res.ok) {
           addEv("error", `<div class="k">confirm</div>HTTP ${res.status} ${esc(JSON.stringify(body))}`);
           return;
         }
+        hideConfirm();
         addEv("final", `<div class="k">confirm</div>${approved ? "已批准并执行" : "已拒绝"} ${esc(JSON.stringify(body.result || body))}`);
       } catch (e) {
         addEv("error", `<div class="k">confirm</div>${esc(e.message || e)}`);

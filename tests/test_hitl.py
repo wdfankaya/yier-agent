@@ -1,7 +1,7 @@
 """HITL 确认流。
 
 1. 敏感工具拦截 → confirm_required，未授权不执行
-2. 同一订单复用 token；授权后本会话放行
+2. 同一订单复用 token；授权后仅同参数放行一次
 3. 另一订单仍要确认
 4. 拒绝后本会话 denied
 5. hitl_enabled=False 直接执行
@@ -91,15 +91,15 @@ def test_allow_then_other_order():
         tm = _tm(gate)
         tok = _refund(tm)["confirm_token"]
         info = gate.resolve(tok, True)
-        if not info["ok"] or ORDER_A not in gate.allowed_orders:
+        if not info["ok"]:
             _fail(f"resolve 失败 {info}")
         done = _refund(tm)
         if not done.get("success"):
-            _fail(f"白名单后应真正退款，实际 {done}")
+            _fail(f"授权后应真正退款，实际 {done}")
         other = _refund(tm, ORDER_B)
         if other.get("status") != "confirm_required":
             _fail(f"另一订单仍应拦截，实际 {other}")
-        _ok("本单免二次确认；其他订单仍拦截")
+        _ok("同参数重试复用结果；其他订单仍拦截")
 
 
 def test_deny():
@@ -146,8 +146,6 @@ def test_utterance():
             _fail("有 pending 时「我确认要退货」也不应整句匹配")
         if gate.consume_utterance("确认") != "approved":
             _fail("短回复「确认」应放行")
-        if ORDER_A not in gate.allowed_orders:
-            _fail("确认后应进白名单")
         if _refund(tm).get("success") is not True:
             _fail("确认后本轮应能真正退款")
         gate2 = ConfirmationGate()
@@ -229,7 +227,8 @@ def test_http_confirm():
     path = str(ROOT / "app" / "sessions" / "server" / "hitl-test" / f"{sid}.json")
     agent = None
     try:
-        with TestClient(app) as client:
+        from unittest.mock import patch
+        with patch.object(settings, "api_tokens", {"hitl-u": "t" * 40}), TestClient(app, headers={"Authorization": "Bearer " + "t" * 40}) as client:
             miss = client.post(
                 "/api/confirm",
                 json={"session_id": "no-such-hitl-session", "token": "x", "approved": True},
@@ -245,8 +244,7 @@ def test_http_confirm():
             tok = json.loads(
                 agent.tool_manager.execute_tool("apply_refund", REASON)
             )["confirm_token"]
-            registry._agents[sid] = agent
-            registry._user_of[sid] = "hitl-u"
+            registry._agents[("hitl-u", sid)] = agent
 
             bad = client.post(
                 "/api/confirm",
@@ -266,8 +264,8 @@ def test_http_confirm():
                 _fail(f"批准应当场执行退款，实际 {body}")
         _ok("confirm 404/400/200；demo 页可访问")
     finally:
-        if sid in getattr(registry, "_agents", {}):
-            registry.remove(sid)
+        if ("hitl-u", sid) in getattr(registry, "_agents", {}):
+            registry.remove(sid, "hitl-u")
         (
             settings.db_enabled,
             settings.redis_enabled,
@@ -313,9 +311,9 @@ def test_shared_gate():
         if data.get("status") != "confirm_required":
             _fail(f"售后 apply_refund 应拦截，实际 {data}")
         orch.reset()
-        if orch.hitl.pending or orch.hitl.allowed_orders:
+        if orch.hitl.pending or orch.hitl._grants:
             _fail("reset() 应清空 HITL 状态")
-        _ok("多 Agent 共享闸门；reset 清空白名单")
+        _ok("多 Agent 共享闸门；reset 清空确认状态")
     finally:
         (
             settings.db_enabled,
