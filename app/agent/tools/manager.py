@@ -11,9 +11,11 @@ memory_manager / skill_manager 由构造方注入（按 Agent 持有），
 import json
 import asyncio
 from typing import Optional
+from app.observability import stage, failure, event
 
 from app.agent.tools.registry import TOOL_DEFINITIONS as LOCAL_TOOL_DEFINITIONS
 from app.agent.tools.registry import execute_tool as local_execute_tool
+from app.agent.tools.decorator import validate_arguments, parse_arguments, ToolInputError
 from app.agent.tools.memory_tool import bind_memory_manager
 from app.agent.tools.skill_tool import bind_skill_manager
 
@@ -43,6 +45,7 @@ class ToolManager:
         skill_manager=None,
         hitl=None,
     ):
+        self._inflight: set[asyncio.Task] = set()
         self._mcp_client = None
         self._tool_source: dict[str, str] = {}
         self._tool_defs: list[dict] = []
@@ -110,12 +113,17 @@ class ToolManager:
 
     def execute_tool(self, name: str, arguments: dict) -> str:
         """根据工具来源分发调用。敏感工具先过 HITL 闸，未授权不执行。"""
+        source = self._tool_source.get(name)
+        if source is None:
+            return json.dumps({"error": "未知工具或当前 Agent 无权调用", "code": "unknown_tool"}, ensure_ascii=False)
+        try:
+            arguments = validate_arguments(name, arguments) if source == "local" else parse_arguments(arguments)
+        except ToolInputError as exc:
+            return json.dumps(exc.payload(name), ensure_ascii=False)
         if self.hitl is not None and self.is_sensitive(name):
             blocked = self.hitl.intercept(name, arguments or {})
             if blocked is not None:
                 return json.dumps(blocked, ensure_ascii=False)
-
-        source = self._tool_source.get(name)
 
         if source == "mcp" and self._mcp_client:
             raw = self._mcp_client.call_tool(name, arguments)
@@ -141,19 +149,29 @@ class ToolManager:
                 result = {"raw": raw}
             self.hitl.record(name, arguments, result)
 
+    @property
+    def has_pending_work(self):
+        return any(not task.done() for task in self._inflight)
+
     async def aexecute_tool(self, name: str, arguments: dict) -> str:
-        """同步工具下沉线程池；asyncio.wait_for 10s 超时。"""
+        """Bound caller waiting; keep late effects tracked and never auto-retry writes."""
         from app.config.settings import settings
-        try:
-            return await asyncio.wait_for(
-                asyncio.to_thread(self.execute_tool, name, arguments),
-                timeout=settings.tool_timeout,
-            )
-        except asyncio.TimeoutError:
-            return json.dumps(
-                {"error": f"工具 {name} 执行超时（>{settings.tool_timeout}s）"},
-                ensure_ascii=False,
-            )
+        task = asyncio.create_task(asyncio.to_thread(self.execute_tool, name, arguments))
+        self._inflight.add(task)
+        def completed(t):
+            self._inflight.discard(t)
+            if not t.cancelled() and t.exception() is not None:
+                failure("tool_background_failed", t.exception())
+        task.add_done_callback(completed)
+        with stage("tool"):
+            try:
+                return await asyncio.wait_for(asyncio.shield(task), timeout=settings.tool_timeout)
+            except asyncio.TimeoutError:
+                event("tool_timeout", status="execution_unknown")
+                return json.dumps({"status": "execution_unknown", "error": "工具执行超时，结果未知，请核实状态后再操作"}, ensure_ascii=False)
+            except Exception as exc:
+                failure("tool_failed", exc)
+                return json.dumps({"status": "execution_unknown", "error": "工具调用异常，结果未知"}, ensure_ascii=False)
 
     def close(self):
         """清理 MCP 连接。"""

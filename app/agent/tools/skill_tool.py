@@ -12,6 +12,7 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 from app.agent.tools.decorator import tool
+from app.agent.tools.arguments import SkillName
 
 if TYPE_CHECKING:
     from app.agent.skills.loader import SkillManager
@@ -50,7 +51,7 @@ def bind_skill_manager(manager):
         "skill_name": "要加载的技能名称，如 process-return、track-order、product-recommend"
     },
 )
-def load_skill(skill_name: str) -> dict:
+def load_skill(skill_name: SkillName) -> dict:
     """加载指定技能的完整指令。Agent 调用后按指令处理用户问题。"""
     manager = get_current_skill_manager()
     if manager is None:

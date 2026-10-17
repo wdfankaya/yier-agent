@@ -37,7 +37,8 @@ class MCPClient:
 
         self._thread = threading.Thread(target=run_loop, daemon=True)
         self._thread.start()
-        self._connected.wait(timeout=30)
+        if not self._connected.wait(timeout=30):
+            raise TimeoutError("MCP connection timed out")
 
         if error_holder:
             raise error_holder[0]
@@ -72,9 +73,10 @@ class MCPClient:
         )
         try:
             result = future.result(timeout=30)
-        except Exception as e:
+        except Exception:
+            future.cancel()
             return json.dumps(
-                {"error": f"MCP 工具调用出错: {e}"}, ensure_ascii=False
+                {"status": "execution_unknown", "error": "MCP 调用中断，结果未知，请核实状态"}, ensure_ascii=False
             )
 
         if result.isError:

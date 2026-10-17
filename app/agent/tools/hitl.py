@@ -138,6 +138,12 @@ def resolve_utterance_on_agent(agent, text):
         return resolve_on_agent(agent, *choice)
 
 
+async def aresolve_utterance_on_agent(agent, text):
+    choice = agent.hitl.utterance(text)
+    if choice is not None:
+        return await aresolve_on_agent(agent, *choice)
+
+
 def notify_confirm_required(
     on_event, emit, result_str: str, cli_prefix: str = "",
 ) -> None:
@@ -195,32 +201,39 @@ def _tool_manager_for(agent, tool_name: str):
 
 
 def resolve_on_agent(agent, token: str, approved: bool) -> dict:
-    """HTTP / 测试入口：改闸；批准则当场执行敏感工具并写入对话历史。"""
-    gate = agent.hitl
-    info = gate.resolve(token, approved)
+    from app.agent.async_utils import run_sync
+    return run_sync(aresolve_on_agent(agent, token, approved))
+
+
+async def aresolve_on_agent(agent, token: str, approved: bool) -> dict:
+    """All confirmations use the same bounded async tool executor as chat."""
+    import asyncio
+    info = agent.hitl.resolve(token, approved)
     if not info.get("ok"):
         return info
     result = None
+    status = "denied"
     if approved:
         tm = _tool_manager_for(agent, info["tool"])
-        raw = tm.execute_tool(info["tool"], info["args"])
+        raw = await tm.aexecute_tool(info["tool"], info["args"])
         try:
             result = json.loads(raw)
-        except json.JSONDecodeError:
-            result = {"raw": raw}
-        agent.raw_messages.append({
-            "role": "user",
-            "content": f"[HITL] 已确认 {info['tool']} {info['order_id']}",
-        })
-        agent.raw_messages.append({
-            "role": "assistant",
-            "content": json.dumps(result, ensure_ascii=False),
-        })
+        except (ValueError, TypeError):
+            result = {"status": "execution_unknown"}
+        if not isinstance(result, dict):
+            result = {"status": "execution_unknown"}
+        if result.get("status") == "execution_unknown":
+            status = "unknown"
+        elif result.get("error") or result.get("success") is False or result.get("status") in ("denied", "confirm_required"):
+            status = "failed"
+        else:
+            status = "succeeded"
+        agent.raw_messages.extend([
+            {"role": "user", "content": f"[HITL] 已确认 {info['tool']} {info['order_id']}"},
+            {"role": "assistant", "content": json.dumps(result, ensure_ascii=False)},
+        ])
     else:
-        agent.raw_messages.append({
-            "role": "user",
-            "content": f"[HITL] 已拒绝 {info['tool']} {info['order_id']}",
-        })
+        agent.raw_messages.append({"role": "user", "content": f"[HITL] 已拒绝 {info['tool']} {info['order_id']}"})
     if hasattr(agent, "save"):
-        agent.save()
-    return {**info, "executed": bool(approved), "result": result}
+        await asyncio.to_thread(agent.save)
+    return {**info, "executed": status == "succeeded", "execution_status": status, "result": result}

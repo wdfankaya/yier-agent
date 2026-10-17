@@ -23,6 +23,7 @@ class ConfirmResponse(BaseModel):
     ok: bool
     approved: Optional[bool] = None
     executed: bool = False
+    execution_status: str = "denied"
     order_id: Optional[str] = None
     tool: Optional[str] = None
     amount: Optional[float] = None

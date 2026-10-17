@@ -17,6 +17,7 @@ from pathlib import Path
 from typing import Optional
 
 from app.agent.tools.decorator import tool
+from app.agent.tools.arguments import KnowledgeQuery, TopK
 from app.config.settings import settings
 from app.agent.rag.backends import create_backend
 from app.agent.rag.embedder import Embedder
@@ -77,7 +78,7 @@ def reset_retriever() -> None:
         "top_k": "返回片段数，默认 3，最大 5",
     },
 )
-def search_knowledge(query: str, top_k: int = 3) -> dict:
+def search_knowledge(query: KnowledgeQuery, top_k: TopK = 3) -> dict:
     """检索退换货政策、配送说明、会员权益、FAQ 等知识库内容。
 
     Returns:
@@ -114,7 +115,6 @@ def search_knowledge(query: str, top_k: int = 3) -> dict:
             "results": [],
         }
 
-    top_k = max(1, min(int(top_k or 3), 5))
     hits = retriever.search(query, top_k=top_k)
 
     return {

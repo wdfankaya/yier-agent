@@ -1,6 +1,7 @@
 import random
 
 from app.agent.tools.decorator import tool
+from app.agent.tools.arguments import ProductKeyword
 from app.agent.tools.mock_data import PRODUCTS
 
 
@@ -33,7 +34,7 @@ def _generate_mock_product(keyword: str) -> dict:
     desc="根据商品名称关键词或商品ID查询商品信息，包括价格、库存、规格等。支持模糊搜索",
     params={"keyword": "商品名称关键词或商品ID，例如「耳机」「运动鞋」「SHOE-270-BK-42」"},
 )
-def query_product(keyword: str) -> dict:
+def query_product(keyword: ProductKeyword) -> dict:
     """根据商品名称关键词或商品ID查询商品信息，包括价格、库存、规格等。"""
     if keyword in PRODUCTS:
         return {"success": True, "products": [PRODUCTS[keyword]]}

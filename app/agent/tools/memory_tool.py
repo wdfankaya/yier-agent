@@ -16,6 +16,7 @@ from contextvars import ContextVar
 from typing import TYPE_CHECKING
 
 from app.agent.tools.decorator import tool
+from app.agent.tools.arguments import MemoryQuery
 
 if TYPE_CHECKING:
     from app.agent.memory.manager import MemoryManager
@@ -50,7 +51,7 @@ def bind_memory_manager(manager):
     ),
     params={"query": "可选的查询关键词，用于过滤记忆内容"},
 )
-def recall_user_memory(query: str = "") -> dict:
+def recall_user_memory(query: MemoryQuery = "") -> dict:
     """查询当前用户的记忆信息（长期记忆和短期记忆）。"""
     manager = get_current_memory_manager()
     if manager is None or not manager.memory_enabled:

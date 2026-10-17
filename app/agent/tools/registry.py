@@ -22,7 +22,7 @@ import app.agent.tools.refund  # noqa: F401
 import app.agent.tools.memory_tool  # noqa: F401
 import app.agent.tools.skill_tool  # noqa: F401
 
-from app.agent.tools.decorator import TOOL_DEFINITIONS, _TOOL_MAP  # noqa: E402
+from app.agent.tools.decorator import TOOL_DEFINITIONS, _TOOL_MAP, validate_arguments, ToolInputError  # noqa: E402
 
 
 def execute_tool(name: str, arguments: dict) -> str:
@@ -31,7 +31,10 @@ def execute_tool(name: str, arguments: dict) -> str:
     if not func:
         return json.dumps({"error": f"未知工具: {name}"}, ensure_ascii=False)
     try:
-        result = func(**arguments)
+        validated = validate_arguments(name, arguments)
+        result = func(**validated)
+    except ToolInputError as exc:
+        result = exc.payload(name)
     except Exception as e:
         result = {"error": f"工具执行出错: {e}"}
     return json.dumps(result, ensure_ascii=False)

@@ -218,7 +218,7 @@
           return;
         }
         hideConfirm();
-        addEv("final", `<div class="k">confirm</div>${approved ? "已批准并执行" : "已拒绝"} ${esc(JSON.stringify(body.result || body))}`);
+        addEv("final", `<div class="k">confirm</div>${({succeeded:"执行成功",failed:"执行失败",unknown:"结果未知，请核实后再操作",denied:"已拒绝"})[body.execution_status] || "请查看结果"} ${esc(JSON.stringify(body.result || body))}`);
       } catch (e) {
         addEv("error", `<div class="k">confirm</div>${esc(e.message || e)}`);
       }

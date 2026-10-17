@@ -1,4 +1,5 @@
 from app.agent.tools.decorator import tool
+from app.agent.tools.arguments import OrderId
 from app.agent.tools.mock_data import LOGISTICS, ORDERS
 
 
@@ -6,7 +7,7 @@ from app.agent.tools.mock_data import LOGISTICS, ORDERS
     desc="根据订单号查询物流轨迹信息，包括快递公司、运单号、运输状态和轨迹事件",
     params={"order_id": "订单号，例如 ORD-20240115-001"},
 )
-def query_logistics(order_id: str) -> dict:
+def query_logistics(order_id: OrderId) -> dict:
     """根据订单号查询物流轨迹信息。"""
     order = ORDERS.get(order_id)
     if not order:

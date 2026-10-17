@@ -1,4 +1,5 @@
 from pydantic_settings import BaseSettings
+from pydantic import Field
 
 
 class Settings(BaseSettings):
@@ -69,6 +70,11 @@ class Settings(BaseSettings):
     # Server-side mapping: user ID -> private bearer token. Empty disables API access.
     api_tokens: dict[str, str] = {}
     hitl_token_ttl: float = 300.0
+    session_idle_ttl: float = Field(1800.0, gt=0)
+    session_max_resident: int = Field(200, ge=1)
+    session_reap_interval: float = Field(30.0, gt=0)
+    shutdown_timeout: float = Field(10.0, gt=0)
+    memory_maintenance_timeout: float = Field(5.0, gt=0)
 
     # HTTP 按 user_id 令牌桶（10 次/分钟）；LLM 超时/重试；工具超时
     rate_limit_enabled: bool = True

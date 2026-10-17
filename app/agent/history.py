@@ -28,6 +28,8 @@ def repair_tool_groups(messages):
 def guarded_turn(method):
     @wraps(method)
     async def wrapped(self, *args, **kwargs):
+        from app.agent.maintenance import drain_maintenance
+        await drain_maintenance(self)
         repair_tool_groups(self.raw_messages)
         try:
             return await method(self, *args, **kwargs)

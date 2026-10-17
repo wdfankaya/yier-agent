@@ -1,41 +1,53 @@
-"""工具装饰器：从函数签名自动生成 OpenAI function schema，消灭手写双登记。
-
-在工具函数上写 ``@tool(desc=..., params={...})``，import 时自动完成：
-  ① 把 {函数名: 函数} 登记进 _TOOL_MAP（execute_tool 分发执行用）
-  ② 用 inspect.signature 解析参数注解/默认值 → JSON Schema properties / required
-  ③ 参数级 description 来自 params={参数名: 描述}，缺省时回退到函数 docstring
-
-规则：
-  - 无默认值的参数 → required；有默认值的参数 → 可选，并把 default 写进 schema
-  - 类型注解映射 int→integer / float→number / bool→boolean / Optional[X]→X，其余 string
-  - desc 是模型决定"何时调用/填什么"的关键语义，务必写全；删登记样板但别删语义
-"""
-
+"""One Pydantic argument model drives both runtime validation and tool schema."""
 import inspect
+import json
 import re
-from typing import Callable, Optional
+from functools import wraps
+from typing import Callable, Optional, get_type_hints
+from pydantic import BaseModel, ConfigDict, Field, ValidationError, create_model
 
 _TOOL_MAP: dict[str, Callable] = {}
+_TOOL_MODELS: dict[str, type[BaseModel]] = {}
 TOOL_DEFINITIONS: list[dict] = []
 
+class ToolArguments(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True, validate_default=True)
 
-def _json_type(annotation) -> str:
-    """把类型注解映射成 JSON Schema 的 type 字符串。"""
-    if annotation is int:
-        return "integer"
-    if annotation is float:
-        return "number"
-    if annotation is bool:
-        return "boolean"
-    # Optional[X] / X | None → 取非 None 的基础类型
-    origin = getattr(annotation, "__origin__", None)
-    if origin is not None:
-        args = getattr(annotation, "__args__", ())
-        non_none = [a for a in args if a is not type(None)]
-        if len(non_none) == 1:
-            return _json_type(non_none[0])
-    return "string"
+class ToolInputError(ValueError):
+    def __init__(self, issues):
+        self.issues = issues
+        super().__init__("Invalid tool arguments")
 
+    def payload(self, name):
+        return {"success": False, "error": "工具参数校验失败，请按字段要求修正后重试",
+                "code": "invalid_tool_arguments", "tool": name, "issues": self.issues}
+
+def parse_arguments(arguments):
+    if isinstance(arguments, str):
+        def pairs(items):
+            result = {}
+            for key, value in items:
+                if key in result:
+                    raise ValueError("Duplicate field")
+                result[key] = value
+            return result
+        def invalid_constant(value):
+            raise ValueError("Non-finite number")
+        try:
+            arguments = json.loads(arguments, object_pairs_hook=pairs, parse_constant=invalid_constant)
+        except (ValueError, RecursionError):
+            raise ToolInputError([{"field": [], "type": "json_invalid", "message": "参数必须是合法 JSON，不能含重复字段或非有限数值"}]) from None
+    if not isinstance(arguments, dict):
+        raise ToolInputError([{"field": [], "type": "object_required", "message": "参数必须是 JSON 对象"}])
+    return arguments
+
+def validate_arguments(name, arguments):
+    data = parse_arguments(arguments)
+    try:
+        return _TOOL_MODELS[name].model_validate(data).model_dump()
+    except ValidationError as exc:
+        raise ToolInputError([{"field": list(e["loc"]), "type": e["type"], "message": e["msg"]}
+                              for e in exc.errors(include_input=False, include_context=False, include_url=False)]) from None
 
 def _docstring_param_descs(doc: Optional[str]) -> dict[str, str]:
     """从 docstring 里粗提取 '参数名: 描述' 行，作为 params 缺省时的回退。"""
@@ -49,52 +61,37 @@ def _docstring_param_descs(doc: Optional[str]) -> dict[str, str]:
     return out
 
 
-def tool(desc: str, params: Optional[dict[str, str]] = None):
-    """装饰器：import 时注册函数与其自动生成的 schema。
 
-    Args:
-        desc: 工具的整体 description（模型判断何时调用的依据）。
-        params: {参数名: 该参数的 description}，用于补全参数级语义。
-    """
+def tool(desc: str, params: Optional[dict[str, str]] = None):
+    """Register a validated function; annotations may include Pydantic constraints."""
     def decorator(func: Callable) -> Callable:
         name = func.__name__
-        _TOOL_MAP[name] = func
+        signature = inspect.signature(func)
+        hints = get_type_hints(func, include_extras=True)
+        descriptions = _docstring_param_descs(func.__doc__)
+        descriptions.update(params or {})
+        fields = {}
+        for pname, parameter in signature.parameters.items():
+            if parameter.kind not in (inspect.Parameter.POSITIONAL_OR_KEYWORD, inspect.Parameter.KEYWORD_ONLY):
+                raise TypeError("Tools require named parameters")
+            if pname not in hints:
+                raise TypeError(f"Tool parameter {pname} requires a type annotation")
+            default = ... if parameter.default is inspect.Parameter.empty else parameter.default
+            fields[pname] = (hints[pname], Field(default=default, description=descriptions.get(pname)))
+        model = create_model(f"{name}Arguments", __base__=ToolArguments, **fields)
+        _TOOL_MODELS[name] = model
 
-        doc_params = _docstring_param_descs(func.__doc__)
-        properties: dict = {}
-        required: list[str] = []
+        @wraps(func)
+        def validated(*args, **kwargs):
+            bound = signature.bind_partial(*args, **kwargs)
+            return func(**validate_arguments(name, bound.arguments))
 
-        for pname, p in inspect.signature(func).parameters.items():
-            if pname in ("self", "cls"):
-                continue
-            prop: dict = {"type": _json_type(p.annotation)}
-
-            pdesc = ""
-            if params and pname in params:
-                pdesc = params[pname]
-            elif pname in doc_params:
-                pdesc = doc_params[pname]
-            if pdesc:
-                prop["description"] = pdesc
-
-            if p.default is not inspect.Parameter.empty:
-                prop["default"] = p.default
-            else:
-                required.append(pname)
-            properties[pname] = prop
-
-        TOOL_DEFINITIONS.append({
-            "type": "function",
-            "function": {
-                "name": name,
-                "description": desc,
-                "parameters": {
-                    "type": "object",
-                    "properties": properties,
-                    "required": required,
-                },
-            },
-        })
-        return func
-
+        _TOOL_MAP[name] = validated
+        definition = {"type": "function", "function": {
+            "name": name, "description": desc, "parameters": model.model_json_schema(),
+        }}
+        # Reloading a module must not publish duplicate tool names.
+        TOOL_DEFINITIONS[:] = [d for d in TOOL_DEFINITIONS if d["function"]["name"] != name]
+        TOOL_DEFINITIONS.append(definition)
+        return validated
     return decorator

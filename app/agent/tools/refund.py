@@ -1,4 +1,5 @@
 from app.agent.tools.decorator import tool
+from app.agent.tools.arguments import OrderId, RefundReason
 from app.agent.tools.mock_data import ORDERS
 
 
@@ -9,7 +10,7 @@ from app.agent.tools.mock_data import ORDERS
         "reason": "退款原因，例如「尺码不合适」「质量问题」「不想要了」",
     },
 )
-def apply_refund(order_id: str, reason: str) -> dict:
+def apply_refund(order_id: OrderId, reason: RefundReason) -> dict:
     """为指定订单申请退款，需提供退款原因。"""
     order = ORDERS.get(order_id)
     if not order:

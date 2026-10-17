@@ -11,6 +11,7 @@ from app.agent.async_utils import run_sync
 from app.agent.resilience import llm_create
 from app.agent.tools.hitl import notify_confirm_required
 from app.agent.tools.manager import ToolManager
+from app.agent.tools.decorator import parse_arguments, ToolInputError
 
 
 AGENT_CONFIGS = {
@@ -105,9 +106,13 @@ class SubAgent:
 
             for tc in assistant_msg.tool_calls:
                 func_name = tc.function.name
-                func_args = json.loads(tc.function.arguments)
-
-                self._emit_action(func_name, func_args)
+                func_args = tc.function.arguments
+                try:
+                    func_args = parse_arguments(func_args)
+                except ToolInputError:
+                    pass
+                display_args = func_args if isinstance(func_args, dict) else {}
+                self._emit_action(func_name, display_args if isinstance(display_args, dict) else {})
                 result_str = await self.tool_manager.aexecute_tool(func_name, func_args)
                 self._emit_observation(func_name, result_str)
 

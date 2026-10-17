@@ -10,7 +10,9 @@ from openai import AsyncOpenAI
 
 from app.agent.async_utils import run_sync
 from app.agent.history import guarded_turn
-from app.agent.tools.hitl import resolve_utterance_on_agent
+from app.agent.maintenance import finish_turn, drain_maintenance, close_resources
+from app.observability import stage, failure
+from app.agent.tools.hitl import aresolve_utterance_on_agent, aresolve_on_agent
 from app.agent.resilience import llm_create, llm_parse
 from app.agent.storage import delete_session, load_session, save_session
 from app.agent.summarizer import summarize
@@ -118,7 +120,8 @@ class MultiAgentOrchestrator:
     @guarded_turn
     async def achat(self, user_input: str) -> CustomerServiceResponse:
         """路由 → 子 Agent 执行 → 结构化提取 → 返回结果。"""
-        await asyncio.to_thread(resolve_utterance_on_agent, self, user_input)
+        await drain_maintenance(self)
+        await aresolve_utterance_on_agent(self, user_input)
         self.raw_messages.append({"role": "user", "content": user_input})
 
         agent_key = await self.router.aroute(user_input, self.raw_messages)
@@ -139,34 +142,14 @@ class MultiAgentOrchestrator:
             agent.on_event = None
         self.raw_messages.extend(new_messages)
 
-        result = await self._extract_structured_response(final_text)
-
-        await self.memory_manager.aupdate_short_term(self.raw_messages[-6:])
+        with stage("structured_response"):
+            result = await self._extract_structured_response(final_text)
 
         self.raw_messages.append(
             {"role": "assistant", "content": result.model_dump_json(ensure_ascii=False)}
         )
 
-        if len(self.raw_messages) > self.history_threshold:
-            await self._compress_history()
-
-        await asyncio.to_thread(
-            save_session,
-            self.session_path, self.raw_messages, self.summary,
-            self.memory_manager.stm_to_dict(),
-            self.user_id,
-        )
-
-        await self._maybe_consolidate()
-
-        # final 事件 = SSE 流的最后一帧
-        self._emit(
-            "final",
-            reply=result.reply,
-            intent=result.intent.value,
-            confidence=result.confidence,
-            requires_human=result.requires_human,
-        )
+        await finish_turn(self, result, save_session)
         return result
 
     def reset(self):
@@ -180,6 +163,10 @@ class MultiAgentOrchestrator:
         """HTTP 确认入口：会话级闸门，批准后由持有该工具的子 Agent 执行。"""
         return resolve_on_agent(self, token, approved)
 
+    async def aresolve_hitl(self, token: str, approved: bool) -> dict:
+        await drain_maintenance(self)
+        return await aresolve_on_agent(self, token, approved)
+
     def save(self) -> None:
         save_session(
             self.session_path, self.raw_messages, self.summary,
@@ -191,12 +178,13 @@ class MultiAgentOrchestrator:
         run_sync(self.aclose())
 
     async def aclose(self):
-        if self._ltm_tasks:
-            await asyncio.gather(*list(self._ltm_tasks), return_exceptions=True)
-        await self._aconsolidate_safe()
-        for agent in self.agents.values():
-            agent.tool_manager.close()
-        await self.client.close()
+        try:
+            await drain_maintenance(self)
+            if self._ltm_tasks:
+                await asyncio.gather(*list(self._ltm_tasks), return_exceptions=True)
+            await self._aconsolidate_safe()
+        finally:
+            await close_resources(self)
 
     async def _maybe_consolidate(self) -> None:
         n = settings.ltm_consolidate_every
@@ -209,17 +197,20 @@ class MultiAgentOrchestrator:
         if self._ephemeral_loop:
             await self._aconsolidate_safe()
             return
+        if self._ltm_tasks:
+            return
         task = asyncio.get_running_loop().create_task(self._aconsolidate_safe())
         self._ltm_tasks.add(task)
         task.add_done_callback(self._ltm_tasks.discard)
 
     async def _aconsolidate_safe(self) -> None:
         try:
-            await self.memory_manager.aconsolidate_to_long_term(
-                list(self.raw_messages), self.summary,
-            )
+            with stage("long_term_memory"):
+                await asyncio.wait_for(self.memory_manager.aconsolidate_to_long_term(
+                    list(self.raw_messages), self.summary,
+                ), settings.memory_maintenance_timeout)
         except Exception as e:  # noqa: BLE001
-            print(f"⚠️  LTM 巩固失败: {type(e).__name__}: {e}")
+            failure("long_term_memory_failed", e)
 
     def _build_messages(self, agent: SubAgent) -> list[dict]:
         """用子 Agent 的 system prompt 构建消息列表。"""

@@ -33,7 +33,7 @@ class FakeAgent:
 class HTTPTests(unittest.IsolatedAsyncioTestCase):
     async def asyncSetUp(self):
         self.reg = SessionRegistry()
-        self.patches = [patch.object(server, 'registry', self.reg),
+        self.patches = [patch.object(server, "_stopping", False), patch.object(server, 'registry', self.reg),
             patch.object(settings, 'api_tokens', {'alice':TOKEN_A, 'bob':TOKEN_B}),
             patch.object(settings, 'rate_limit_enabled', False),
             patch.object(settings, 'db_enabled', False)]
@@ -97,7 +97,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
             with self.assertRaises(RuntimeError): asyncio.get_running_loop()
             self.assertEqual((uid,sid),('alice','cold'))
             return SimpleNamespace()
-        self.reg._build_agent=lambda *a: SimpleNamespace(resolve_hitl=lambda *a:{'ok':False,'error':'expired'})
+        self.reg._build_agent=lambda *a: SimpleNamespace(aresolve_hitl=AsyncMock(return_value={'ok':False,'error':'expired'}))
         with patch.object(settings,'db_enabled',True),patch.object(repository,'sync_load_session_state',side_effect=load):
             r=await self.client.post('/api/confirm',json={'session_id':'cold','token':'old','approved':True})
         self.assertEqual(r.status_code,400)
@@ -143,6 +143,7 @@ class HTTPTests(unittest.IsolatedAsyncioTestCase):
         agent._maybe_consolidate=AsyncMock()
         with patch('app.agent.chat.llm_create', next_llm), patch('app.agent.chat.save_session'):
             self.assertEqual((await agent.achat('next question')).reply, 'recovered')
+            await agent._maintenance_task
 
 class GateTests(unittest.TestCase):
     def setUp(self):

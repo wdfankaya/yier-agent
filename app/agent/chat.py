@@ -6,7 +6,9 @@ from openai import AsyncOpenAI
 
 from app.agent.async_utils import run_sync
 from app.agent.history import guarded_turn
-from app.agent.tools.hitl import resolve_utterance_on_agent
+from app.agent.maintenance import finish_turn, drain_maintenance, close_resources
+from app.observability import stage, failure
+from app.agent.tools.hitl import aresolve_utterance_on_agent, aresolve_on_agent
 from app.agent.resilience import llm_create, llm_parse
 from app.agent.storage import delete_session, load_session, save_session
 from app.agent.summarizer import summarize
@@ -15,6 +17,7 @@ from app.prompts.customer_service import SYSTEM_PROMPT
 from app.schemas.response import CustomerServiceResponse, IntentType
 from app.agent.tools.hitl import ConfirmationGate, notify_confirm_required, resolve_on_agent
 from app.agent.tools.manager import ToolManager
+from app.agent.tools.decorator import parse_arguments, ToolInputError
 
 
 class YierAgent:
@@ -96,39 +99,21 @@ class YierAgent:
     @guarded_turn
     async def achat(self, user_input: str) -> CustomerServiceResponse:
         """处理用户输入：ReAct 循环 → 结构化提取 → 返回结果（async）。"""
-        await asyncio.to_thread(resolve_utterance_on_agent, self, user_input)
+        await drain_maintenance(self)
+        await aresolve_utterance_on_agent(self, user_input)
         self.raw_messages.append({"role": "user", "content": user_input})
 
-        final_text = await self._react_loop()
+        with stage("react"):
+            final_text = await self._react_loop()
 
-        result = await self._extract_structured_response(final_text)
-
-        await self.memory_manager.aupdate_short_term(self.raw_messages[-6:])
+        with stage("structured_response"):
+            result = await self._extract_structured_response(final_text)
 
         self.raw_messages.append(
             {"role": "assistant", "content": result.model_dump_json(ensure_ascii=False)}
         )
 
-        if len(self.raw_messages) > self.history_threshold:
-            await self._compress_history()
-
-        await asyncio.to_thread(
-            save_session,
-            self.session_path, self.raw_messages, self.summary,
-            self.memory_manager.stm_to_dict(),
-            self.user_id,
-        )
-
-        await self._maybe_consolidate()
-
-        # final 事件 = SSE 流的最后一帧（CLI 无回调，由 main.py 自己打印回复）
-        self._emit(
-            "final",
-            reply=result.reply,
-            intent=result.intent.value,
-            confidence=result.confidence,
-            requires_human=result.requires_human,
-        )
+        await finish_turn(self, result, save_session)
         return result
 
     def reset(self):
@@ -142,6 +127,10 @@ class YierAgent:
         """HTTP 确认入口：改闸；批准则当场执行敏感工具。"""
         return resolve_on_agent(self, token, approved)
 
+    async def aresolve_hitl(self, token: str, approved: bool) -> dict:
+        await drain_maintenance(self)
+        return await aresolve_on_agent(self, token, approved)
+
     def save(self) -> None:
         save_session(
             self.session_path, self.raw_messages, self.summary,
@@ -153,12 +142,13 @@ class YierAgent:
         run_sync(self.aclose())
 
     async def aclose(self):
-        """优雅关闭：收尾后台 LTM 任务 + 再巩固一次 + 关工具/HTTP 客户端。"""
-        if self._ltm_tasks:
-            await asyncio.gather(*list(self._ltm_tasks), return_exceptions=True)
-        await self._aconsolidate_safe()
-        self.tool_manager.close()
-        await self.client.close()
+        try:
+            await drain_maintenance(self)
+            if self._ltm_tasks:
+                await asyncio.gather(*list(self._ltm_tasks), return_exceptions=True)
+            await self._aconsolidate_safe()
+        finally:
+            await close_resources(self)
 
     async def _maybe_consolidate(self) -> None:
         """每 N 轮巩固一次 LTM：服务端后台任务，CLI 内联 await（循环马上销毁）。"""
@@ -172,17 +162,20 @@ class YierAgent:
         if self._ephemeral_loop:
             await self._aconsolidate_safe()
             return
+        if self._ltm_tasks:
+            return
         task = asyncio.get_running_loop().create_task(self._aconsolidate_safe())
         self._ltm_tasks.add(task)
         task.add_done_callback(self._ltm_tasks.discard)
 
     async def _aconsolidate_safe(self) -> None:
         try:
-            await self.memory_manager.aconsolidate_to_long_term(
-                list(self.raw_messages), self.summary,
-            )
+            with stage("long_term_memory"):
+                await asyncio.wait_for(self.memory_manager.aconsolidate_to_long_term(
+                    list(self.raw_messages), self.summary,
+                ), settings.memory_maintenance_timeout)
         except Exception as e:  # noqa: BLE001 —— 后台巩固失败不影响本轮对话
-            print(f"⚠️  LTM 巩固失败: {type(e).__name__}: {e}")
+            failure("long_term_memory_failed", e)
 
     async def _react_loop(self) -> str:
         """ReAct 循环：调用 LLM → 执行工具 → 观察结果 → 重复，直到模型给出最终回答。"""
@@ -223,9 +216,13 @@ class YierAgent:
 
             for tc in assistant_msg.tool_calls:
                 func_name = tc.function.name
-                func_args = json.loads(tc.function.arguments)
-
-                self._emit_tool_call(func_name, func_args)
+                func_args = tc.function.arguments
+                try:
+                    func_args = parse_arguments(func_args)
+                except ToolInputError:
+                    pass
+                display_args = func_args if isinstance(func_args, dict) else {}
+                self._emit_tool_call(func_name, display_args if isinstance(display_args, dict) else {})
                 result_str = await self.tool_manager.aexecute_tool(func_name, func_args)
                 self._emit_tool_result(func_name, result_str)
 

@@ -21,6 +21,8 @@ from __future__ import annotations
 import asyncio
 import json
 import inspect
+import logging
+import time
 from contextlib import asynccontextmanager
 
 from pathlib import Path
@@ -32,6 +34,8 @@ from app.server.identifiers import validate_id
 from fastapi.responses import FileResponse, StreamingResponse
 
 from app.config.settings import settings
+from app.observability import request_id, new_request_id, failure, stage, event
+from app.agent.maintenance import drain_maintenance, close_resources
 from app.server.schemas import (
     ChatRequest,
     ConfirmRequest,
@@ -40,10 +44,11 @@ from app.server.schemas import (
     HealthResponse,
     SessionMessagesResponse,
 )
-from app.server.sessions import SESSION_DIR, SessionRegistry
+from app.server.sessions import SESSION_DIR, SessionRegistry, SessionCapacityError
 
 registry = SessionRegistry()
 _active_tasks: set[asyncio.Task] = set()
+_stopping = False
 
 # SSE 流结束哨兵：用对象而非 dict，和事件本身区分；走同一队列保证 final/error 先到
 _END = object()
@@ -63,20 +68,42 @@ async def lifespan(app: FastAPI):
     print(
         f"🟢 服务启动 | mode={mode} | model={settings.model_name} | redis={redis_status}"
     )
-    yield
-    # 优雅关闭：两个阶段都做完，进程才算干净退出。
-    # 1) 每个常驻 Agent await aclose()（后台 LTM 任务收尾 + 再巩固一次，5s 预算）
-    # 2) 全部落库后再关 PG 连接池（顺序不能反：close 还要写库）。
-    # 3) 最后关 Redis（缓存不是真相源）。
-    print("🛑 收到关闭信号：开始优雅关闭")
-    if _active_tasks:
-        await asyncio.gather(*list(_active_tasks), return_exceptions=True)
-    await registry.close_all()
-    from app.server.repository import aclose_engine
-    await aclose_engine()
-    from app.server.cache import aclose_cache
-    aclose_cache()
-    print("🟢 服务已优雅关闭")
+    global _stopping
+    _stopping = False
+    registry.open()
+    logging.getLogger("yier.service").setLevel(logging.INFO)
+    if not logging.getLogger("yier.service").handlers:
+        logging.getLogger("yier.service").addHandler(logging.StreamHandler())
+    async def reap():
+        while True:
+            await asyncio.sleep(max(0.1, settings.session_reap_interval))
+            try:
+                await registry.reap_idle()
+            except Exception as exc:
+                failure("session_reaper_failed", exc)
+    reaper = asyncio.create_task(reap())
+    try:
+        yield
+    finally:
+        _stopping = True
+        reaper.cancel()
+        deadline = time.monotonic() + settings.shutdown_timeout
+        tasks = set(_active_tasks)
+        tasks.add(reaper)
+        _, pending = await asyncio.wait(tasks, timeout=max(0, deadline-time.monotonic()))
+        for task in pending:
+            task.cancel()
+        if pending:
+            event("shutdown_work_timeout", count=len(pending))
+        await registry.close_all(timeout=max(0, deadline-time.monotonic()))
+        from app.server.repository import aclose_engine
+        from app.server.cache import aclose_cache
+        cleanup = asyncio.create_task(aclose_engine())
+        _, pending = await asyncio.wait({cleanup}, timeout=max(0, deadline-time.monotonic()))
+        for task in pending:
+            task.cancel()
+        aclose_cache()
+        event("shutdown_complete")
 
 
 app = FastAPI(
@@ -108,6 +135,8 @@ def health():
 
 
 def _reserve(session_id: str, user: str) -> None:
+    if _stopping:
+        raise HTTPException(503, "Service is shutting down")
     try:
         validate_id(session_id)
     except ValueError as exc:
@@ -135,13 +164,14 @@ async def chat(req: ChatRequest, user: str = Depends(authenticated_user)):
     _reserve(req.session_id, user)
     # Start before returning the response: the task owns the lease even if the
     # browser disconnects before consuming its first event.
-    stream = _start_chat(req.model_copy(update={"user_id": user}))
+    rid = new_request_id()
+    stream = _start_chat(req.model_copy(update={"user_id": user}), rid)
     return StreamingResponse(stream, media_type="text/event-stream", headers={
-        "Cache-Control": "no-cache", "X-Accel-Buffering": "no",
+        "Cache-Control": "no-cache", "X-Accel-Buffering": "no", "X-Request-ID": rid,
     })
 
 
-def _start_chat(req: ChatRequest):
+def _start_chat(req: ChatRequest, rid=None):
     loop = asyncio.get_running_loop()
     q = asyncio.Queue()
     connected = True
@@ -154,19 +184,28 @@ def _start_chat(req: ChatRequest):
         loop.call_soon_threadsafe(enqueue, event)
 
     async def run():
+        context_token = request_id.set(rid or new_request_id())
         agent = None
         try:
-            agent = await asyncio.to_thread(registry.get_or_create, req.session_id, req.user_id)
+            if registry.get(req.session_id, req.user_id) is None:
+                await registry.reap_idle(force_room=True)
+            with stage("session_init"):
+                agent = await asyncio.to_thread(registry.get_or_create, req.session_id, req.user_id)
             agent.on_event = emit
             emit({"type": "session", "session_id": req.session_id, "user_id": req.user_id})
-            await agent.achat(req.message)
-        except Exception:
-            emit({"type": "error", "message": "本轮处理失败，请稍后重试"})
+            with stage("chat_total"):
+                await agent.achat(req.message)
+        except SessionCapacityError:
+            emit({"type": "error", "message": "服务会话已满，请稍后重试", "code": "session_capacity"})
+        except Exception as exc:
+            failure("chat_failed", exc)
+            emit({"type": "error", "message": "本轮处理失败，请稍后重试", "request_id": request_id.get()})
         finally:
             if agent is not None:
                 agent.on_event = None
             registry.release(req.session_id, req.user_id)
             emit(_END)
+            request_id.reset(context_token)
 
     _track(asyncio.create_task(run()))
 
@@ -188,11 +227,25 @@ def _start_chat(req: ChatRequest):
 async def _exclusive(session_id, user, operation):
     _reserve(session_id, user)
     async def run():
+        context_token = request_id.set(new_request_id())
         try:
+            agent = registry.get(session_id, user)
+            if agent is None:
+                await registry.reap_idle(force_room=True)
+            if agent is not None:
+                await drain_maintenance(agent)
             if inspect.iscoroutinefunction(operation):
                 return await operation()
             return await asyncio.to_thread(operation)
+        except SessionCapacityError:
+            raise HTTPException(503, "Resident session capacity reached") from None
+        except HTTPException:
+            raise
+        except Exception as exc:
+            failure("session_operation_failed", exc)
+            raise HTTPException(500, {"message": "操作失败", "request_id": request_id.get()}) from None
         finally:
+            request_id.reset(context_token)
             registry.release(session_id, user)
     return await asyncio.shield(_track(asyncio.create_task(run())))
 
@@ -200,12 +253,12 @@ async def _exclusive(session_id, user, operation):
 @app.post("/api/confirm", response_model=ConfirmResponse)
 async def confirm(req: ConfirmRequest, user: str = Depends(authenticated_user)):
     check_claim(req.user_id, user)
-    def operation():
-        entry = registry.get_or_restore(req.session_id, user)
+    async def operation():
+        entry = await asyncio.to_thread(registry.get_or_restore, req.session_id, user)
         if entry is None:
             raise HTTPException(404, "会话不存在")
         agent, _ = entry
-        info = agent.resolve_hitl(req.token, req.approved)
+        info = await agent.aresolve_hitl(req.token, req.approved)
         if not info.get("ok"):
             raise HTTPException(400, info.get("error") or "确认失败")
         return ConfirmResponse(**{k: v for k, v in info.items() if k in ConfirmResponse.model_fields})
@@ -237,10 +290,7 @@ async def delete_session(session_id: str, user: str = Depends(authenticated_user
             await asyncio.gather(*tasks, return_exceptions=True)
         await asyncio.to_thread(agent.reset)
         registry.remove(session_id, user)
-        managers = [agent.tool_manager] if hasattr(agent, "tool_manager") else [a.tool_manager for a in agent.agents.values()]
-        for manager in managers:
-            await asyncio.to_thread(manager.close)
-        await agent.client.close()
+        await close_resources(agent)
         return DeleteSessionResponse(deleted=True, session_id=session_id)
     return await _exclusive(session_id, user, operation)
 

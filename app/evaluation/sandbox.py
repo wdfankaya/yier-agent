@@ -159,8 +159,13 @@ class Sandbox:
     def _wrap_execute_tool(self, original, trace: RunTrace):
         def wrapper(name: str, arguments: dict) -> str:
             result_str = original(name, arguments)
+            from app.agent.tools.decorator import parse_arguments, ToolInputError
+            try:
+                recorded_arguments = parse_arguments(arguments)
+            except ToolInputError:
+                recorded_arguments = {"invalid_arguments": True}
             trace.tool_observations.append(
-                ToolObservation(name=name, arguments=dict(arguments), result=result_str)
+                ToolObservation(name=name, arguments=recorded_arguments, result=result_str)
             )
             return result_str
         return wrapper

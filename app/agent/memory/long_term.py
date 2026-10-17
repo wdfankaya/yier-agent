@@ -8,6 +8,10 @@ from __future__ import annotations
 
 import json
 import os
+import uuid
+from app.locks import KeyedLocks
+
+_USER_LOCKS = KeyedLocks()
 from dataclasses import asdict, dataclass
 from datetime import datetime
 from pathlib import Path
@@ -37,6 +41,9 @@ class LongTermMemory:
         self.user_id = user_id
         self.memory_dir = Path(memory_dir)
         self.max_facts = max_facts
+        self._generation = 0
+        self._known_facts = set()
+        self._known_summaries = set()
         self.facts: list[MemoryFact] = []
         self.interaction_summaries: list[dict] = []
 
@@ -47,6 +54,8 @@ class LongTermMemory:
 
     def load(self) -> None:
         """从持久层加载用户的长期记忆（PG 或 JSON）。"""
+        self.facts = []
+        self.interaction_summaries = []
         if self._is_db():
             from app.server.repository import sync_load_facts
             facts, summaries = sync_load_facts(self.user_id)
@@ -71,6 +80,7 @@ class LongTermMemory:
         except (json.JSONDecodeError, OSError):
             return
 
+        self._generation = data.get("generation", 0)
         for item in data.get("facts", []):
             self.facts.append(MemoryFact(
                 content=item["content"],
@@ -79,6 +89,7 @@ class LongTermMemory:
                 source_session=item.get("source_session", ""),
             ))
         self.interaction_summaries = data.get("interaction_summaries", [])
+        self._remember_snapshot()
 
     def save(self) -> None:
         """持久化到 PG 或 JSON 文件。"""
@@ -96,28 +107,54 @@ class LongTermMemory:
             )
             return
 
-        self.memory_dir.mkdir(parents=True, exist_ok=True)
+        path = self.memory_path
+        with _USER_LOCKS.hold(str(path)):
+            disk = self._read_json()
+            if disk.get("generation", 0) != self._generation:
+                # A reset from another session wins over a stale snapshot.
+                self.load()
+                return
+            additions = [f for f in self.facts if f.content.casefold() not in self._known_facts]
+            summaries = [s for s in self.interaction_summaries if s["summary"] not in self._known_summaries]
+            self.facts = [MemoryFact(**f) for f in disk.get("facts", [])]
+            self.add_facts(additions)
+            merged = {s["summary"]: s for s in disk.get("interaction_summaries", [])}
+            merged.update({s["summary"]: s for s in summaries})
+            self.interaction_summaries = list(merged.values())[-50:]
+            self._write_json()
+            self._remember_snapshot()
 
-        payload = {
-            "version": 1,
-            "user_id": self.user_id,
-            "updated_at": datetime.now().isoformat(timespec="seconds"),
-            "facts": [asdict(f) for f in self.facts],
-            "interaction_summaries": self.interaction_summaries,
-        }
+    def _read_json(self):
+        if not self.memory_path.exists():
+            return {}
+        # Do not silently overwrite a corrupt existing file.
+        return json.loads(self.memory_path.read_text(encoding="utf-8"))
 
-        tmp_path = self.memory_path.with_suffix(".json.tmp")
-        with tmp_path.open("w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False, indent=2)
-        os.replace(tmp_path, self.memory_path)
+    def _remember_snapshot(self):
+        self._known_facts = {f.content.casefold() for f in self.facts}
+        self._known_summaries = {s["summary"] for s in self.interaction_summaries}
+
+    def _write_json(self):
+        path = self.memory_path
+        path.parent.mkdir(parents=True, exist_ok=True)
+        payload = {"version": 1, "generation": self._generation, "user_id": self.user_id,
+                   "updated_at": datetime.now().isoformat(timespec="seconds"),
+                   "facts": [asdict(f) for f in self.facts],
+                   "interaction_summaries": self.interaction_summaries}
+        tmp = path.with_suffix(f".{uuid.uuid4().hex}.tmp")
+        try:
+            tmp.write_text(json.dumps(payload, ensure_ascii=False, indent=2), encoding="utf-8")
+            os.replace(tmp, path)
+        finally:
+            tmp.unlink(missing_ok=True)
 
     def add_facts(self, new_facts: list[MemoryFact]) -> None:
         """添加新事实，自动去重并裁剪到 max_facts。"""
-        existing_contents = {f.content.lower() for f in self.facts}
+        existing_contents = {f.content.casefold() for f in self.facts}
         for fact in new_facts:
-            if fact.content.lower() not in existing_contents:
+            if fact.content.casefold() not in existing_contents:
                 self.facts.append(fact)
-                existing_contents.add(fact.content.lower())
+                existing_contents.add(fact.content.casefold())
 
         if len(self.facts) > self.max_facts:
             self.facts = self.facts[-self.max_facts:]
@@ -189,10 +226,12 @@ class LongTermMemory:
             self.facts = []
             self.interaction_summaries = []
             return
-        self.facts = []
-        self.interaction_summaries = []
-        if self.memory_path.exists():
-            self.memory_path.unlink()
+        with _USER_LOCKS.hold(str(self.memory_path)):
+            self._generation = self._read_json().get("generation", 0) + 1
+            self.facts = []
+            self.interaction_summaries = []
+            self._write_json()
+            self._remember_snapshot()
 
     @staticmethod
     def _is_db() -> bool:
