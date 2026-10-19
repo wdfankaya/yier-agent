@@ -1,0 +1,195 @@
+{
+  "kind": "real_model_grounded_answer_abstention",
+  "model": "deepseek-v4-flash",
+  "human_reviewed": false,
+  "note": "Five synthetic unknowns only. Tests grounded-answer component, not entire Agent tool routing.",
+  "cases": [
+    {
+      "id": "rag-096",
+      "query": "明年春节期间商城每天几点停止发货？",
+      "expected_answerable": false,
+      "answerable": false,
+      "answer": "资料中没有关于明年春节期间商城每天几点停止发货的信息，无法据此回答。",
+      "evidence_chunk_ids": [],
+      "passed": true,
+      "usage": {
+        "completion_tokens": 158,
+        "prompt_tokens": 695,
+        "total_tokens": 853,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": null,
+          "audio_tokens": null,
+          "reasoning_tokens": 122,
+          "rejected_prediction_tokens": null,
+          "text_tokens": null
+        },
+        "compute_units": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 695
+      },
+      "retrieved": [
+        "配送说明#01-00",
+        "常见问题FAQ#02-00",
+        "常见问题FAQ#01-00"
+      ],
+      "elapsed_ms": 3287.56
+    },
+    {
+      "id": "rag-097",
+      "query": "企业采购能否开增值税专用发票？",
+      "expected_answerable": false,
+      "answerable": false,
+      "answer": "资料不足，未提及企业采购能否开具增值税专用发票。",
+      "evidence_chunk_ids": [],
+      "passed": true,
+      "usage": {
+        "completion_tokens": 103,
+        "prompt_tokens": 873,
+        "total_tokens": 976,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": null,
+          "audio_tokens": null,
+          "reasoning_tokens": 73,
+          "rejected_prediction_tokens": null,
+          "text_tokens": null
+        },
+        "compute_units": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 873
+      },
+      "retrieved": [
+        "会员权益#02-00",
+        "会员权益#01-00",
+        "常见问题FAQ#02-00"
+      ],
+      "elapsed_ms": 1501.97
+    },
+    {
+      "id": "rag-098",
+      "query": "宠物食品开封后的营养损失是多少？",
+      "expected_answerable": false,
+      "answerable": false,
+      "answer": "资料不足，提供的商城资料未涉及宠物食品开封后的营养损失信息。",
+      "evidence_chunk_ids": [],
+      "passed": true,
+      "usage": {
+        "completion_tokens": 97,
+        "prompt_tokens": 758,
+        "total_tokens": 855,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": null,
+          "audio_tokens": null,
+          "reasoning_tokens": 61,
+          "rejected_prediction_tokens": null,
+          "text_tokens": null
+        },
+        "compute_units": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 758
+      },
+      "retrieved": [
+        "退换货政策#01-00",
+        "退换货政策#02-00",
+        "退换货政策#04-00"
+      ],
+      "elapsed_ms": 1688.92
+    },
+    {
+      "id": "rag-099",
+      "query": "商城明天会上线什么优惠活动？",
+      "expected_answerable": false,
+      "answerable": false,
+      "answer": "资料不足，无法确定商城明天会上线什么优惠活动。",
+      "evidence_chunk_ids": [],
+      "passed": true,
+      "usage": {
+        "completion_tokens": 134,
+        "prompt_tokens": 756,
+        "total_tokens": 890,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": null,
+          "audio_tokens": null,
+          "reasoning_tokens": 101,
+          "rejected_prediction_tokens": null,
+          "text_tokens": null
+        },
+        "compute_units": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 756
+      },
+      "retrieved": [
+        "会员权益#04-00",
+        "常见问题FAQ#02-00",
+        "会员权益#02-00"
+      ],
+      "elapsed_ms": 1659.64
+    },
+    {
+      "id": "rag-100",
+      "query": "上海线下门店的详细地址和营业时间是什么？",
+      "expected_answerable": false,
+      "answerable": false,
+      "answer": "资料中未提供上海线下门店的详细地址和营业时间，无法据此回答。",
+      "evidence_chunk_ids": [],
+      "passed": true,
+      "usage": {
+        "completion_tokens": 88,
+        "prompt_tokens": 850,
+        "total_tokens": 938,
+        "completion_tokens_details": {
+          "accepted_prediction_tokens": null,
+          "audio_tokens": null,
+          "reasoning_tokens": 50,
+          "rejected_prediction_tokens": null,
+          "text_tokens": null
+        },
+        "compute_units": null,
+        "prompt_tokens_details": {
+          "audio_tokens": null,
+          "cache_write_tokens": null,
+          "cached_tokens": 0,
+          "image_tokens": null,
+          "text_tokens": null
+        },
+        "prompt_cache_hit_tokens": 0,
+        "prompt_cache_miss_tokens": 850
+      },
+      "retrieved": [
+        "常见问题FAQ#03-00",
+        "退换货政策#02-00",
+        "常见问题FAQ#02-00"
+      ],
+      "elapsed_ms": 1616.66
+    }
+  ],
+  "passed": 5,
+  "total": 5
+}

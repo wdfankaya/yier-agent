@@ -55,6 +55,9 @@ class SessionRegistry:
     # ---------- 构造 ----------
     def _build_agent(self, session_id: str, user_id: str):
         """构造单/多 Agent（按 settings.multi_agent_enabled 切换）。"""
+        if settings.workflow_enabled:
+            from app.agent.workflow import GraphAgent
+            return GraphAgent(session_path=session_path_for(user_id,session_id),user_id=user_id)
         if settings.multi_agent_enabled:
             from app.multi_agent.orchestrator import MultiAgentOrchestrator
             return MultiAgentOrchestrator(
@@ -113,6 +116,13 @@ class SessionRegistry:
                         exists = sync_load_session_state(user_id, session_id) is not None
                     else:
                         exists = Path(session_path_for(user_id, session_id)).is_file()
+                    if not exists and settings.workflow_enabled:
+                        from app.agent.workflow import checkpoint_store, thread_key
+                        from app.agent.async_utils import run_sync
+                        async def graph_exists():
+                            async with checkpoint_store() as saver:
+                                return await saver.aget_tuple({'configurable':{'thread_id':thread_key(user_id,session_path_for(user_id,session_id))}}) is not None
+                        exists = run_sync(graph_exists())
                     if not exists:
                         return None
                 agent = self._build_agent(session_id, user_id)

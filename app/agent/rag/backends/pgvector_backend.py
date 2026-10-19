@@ -121,6 +121,10 @@ class PgVectorBackend(VectorBackend):
             self._size_cache = kb_size()
         return self._size_cache
 
+    def all_chunks(self):
+        from app.server.repository import sync_kb_all_chunks
+        return [Chunk(**row) for row in sync_kb_all_chunks()]
+
     def load(self) -> None:
         """确认 kb_chunks 已构建；空表 = 还没 build，抛 FileNotFoundError。"""
         *_, kb_size, kb_meta = self._repo()

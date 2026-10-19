@@ -14,6 +14,7 @@
 """
 
 import re
+import hashlib
 from dataclasses import asdict, dataclass, field
 from pathlib import Path
 
@@ -26,6 +27,11 @@ class Chunk:
     doc: str
     section: str
     text: str
+
+    @property
+    def version(self) -> str:
+        """Content revision, not a policy's legal effective date."""
+        return hashlib.sha256(self.text.encode()).hexdigest()[:16]
 
     def to_dict(self) -> dict:
         return asdict(self)
@@ -93,7 +99,9 @@ def _split_long(text: str) -> list[str]:
     pieces: list[str] = []
     buf: list[str] = []
     buf_len = 0
-    for p in paragraphs:
+    # An unbroken paragraph must not defeat the size bound.
+    bounded=[p[i:i+MAX_CHUNK_CHARS] for p in paragraphs for i in range(0,len(p),MAX_CHUNK_CHARS)]
+    for p in bounded:
         p = p.strip()
         if not p:
             continue

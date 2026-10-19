@@ -1,0 +1,19 @@
+{
+  "created": "2026-10-19T09:35:49.954688+00:00",
+  "python": "3.13.14",
+  "kind": "offline_injected_model_real_sqlite_and_http",
+  "modules": [
+    "tests.test_workflow",
+    "tests.test_workflow_api",
+    "tests.test_hybrid_trace",
+    "tests.test_security_regressions",
+    "tests.test_tool_validation",
+    "tests.test_optimizations"
+  ],
+  "tests_run": 55,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "elapsed_seconds": 4.488,
+  "success": true
+}

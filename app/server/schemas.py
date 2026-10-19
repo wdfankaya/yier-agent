@@ -29,6 +29,9 @@ class ConfirmResponse(BaseModel):
     amount: Optional[float] = None
     result: Optional[dict] = None
     error: Optional[str] = None
+    reply: Optional[str] = None
+    pending: Optional[dict] = None
+    request_id: Optional[str] = None
 
 
 class ChatRequest(BaseModel):

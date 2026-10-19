@@ -45,7 +45,11 @@ class Embedder:
         out: list[list[float]] = []
         for i in range(0, len(texts), self._batch_size):
             batch = texts[i : i + self._batch_size]
-            resp = self._client.embeddings.create(model=self._model, input=batch)
+            from app.observability import stage,event
+            with stage('embedding_api'):
+                resp = self._client.embeddings.create(model=self._model, input=batch)
+            if getattr(resp,'usage',None):
+                event('embedding_usage',tokens=resp.usage.total_tokens,model=self._model)
             out.extend(item.embedding for item in resp.data)
         return out
 

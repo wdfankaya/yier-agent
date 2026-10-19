@@ -41,6 +41,7 @@ class EvalResult:
     process_score: float | None = None
     result_score: float | None = None
     passed: bool = False
+    functional_passed: bool = False
 
     trace: dict = field(default_factory=dict)  # RunTrace 精简快照
     judge_reasons: dict = field(default_factory=dict)  # judge 文字理由
@@ -131,6 +132,7 @@ class Evaluator:
                 res.requires_human_match, res.answer_quality, res.faithfulness,
             ])
             res.passed = self._decide_pass(res)
+            res.functional_passed = self._decide_pass(res, include_budget=False)
 
         except Exception as e:  # noqa: BLE001 —— 评分异常隔离到单条用例
             res.error = f"评分异常 {type(e).__name__}: {e}"
@@ -141,11 +143,11 @@ class Evaluator:
         results = [self.run_case(c) for c in cases]
         return self._aggregate(results)
 
-    def _decide_pass(self, res: EvalResult) -> bool:
+    def _decide_pass(self, res: EvalResult, include_budget=True) -> bool:
         """所有被指定的评分维度都 ≥ 阈值，且 token 不超预算，才算通过。"""
         if res.error:
             return False
-        if res.token_pass is False:
+        if include_budget and res.token_pass is False:
             return False
         dims = [
             res.tool_accuracy, res.tool_efficiency, res.process_soundness, res.route_match,
@@ -163,6 +165,9 @@ class Evaluator:
             "total": total,
             "passed": passed,
             "pass_rate": passed / total if total else 0.0,
+            "functional_pass_rate": sum(r.functional_passed for r in results)/total if total else 0.0,
+            "budget_evaluated": sum(r.token_pass is not None for r in results),
+            "budget_passed": sum(r.token_pass is True for r in results),
             "avg_process_score": _avg([r.process_score for r in results]),
             "avg_result_score": _avg([r.result_score for r in results]),
             "total_tokens": total_tokens,
@@ -179,6 +184,7 @@ class Evaluator:
             "case_id": r.case_id,
             "description": r.description,
             "passed": r.passed,
+            "functional_passed": r.functional_passed,
             "process": {
                 "tool_accuracy": r.tool_accuracy,
                 "tool_efficiency": r.tool_efficiency,

@@ -31,6 +31,7 @@ class KnowledgeRetriever:
         self._reranker = reranker
         self._reranker_ready = reranker is not None
         self.last_reranked = False
+        self._lexical = None
 
     @property
     def backend(self) -> VectorBackend:
@@ -67,13 +68,32 @@ class KnowledgeRetriever:
     def search(self, query: str, top_k: int = 3) -> list[RetrievedChunk]:
         if not self._loaded:
             self.load()
-        q_vec = self._embedder.encode_one(query)
+        from app.observability import stage, event
+        with stage("retrieval.embedding"):
+            q_vec = self._embedder.encode_one(query)
         top_k = max(1, top_k)
         recall_k = top_k
         if settings.rerank_enabled:
             recall_k = max(top_k, settings.rerank_recall_k)
-        hits = self._backend.search_hybrid(query, q_vec, top_k=recall_k)
-        return self._maybe_rerank(query, hits, top_k)
+        with stage("retrieval.recall"):
+            if settings.rag_retrieval_mode == "hybrid":
+                from app.agent.rag.lexical import BM25Index, rrf
+                recall_k = max(recall_k, settings.rag_recall_k)
+                if self._lexical is None:
+                    self._lexical = BM25Index(self._backend.all_chunks())
+                hits = rrf([self._backend.search(q_vec, top_k=recall_k),
+                            self._lexical.search(query, recall_k)], recall_k, settings.rag_rrf_k)
+            elif settings.rag_retrieval_mode == "vector":
+                hits = self._backend.search(q_vec, top_k=recall_k)
+            elif settings.rag_retrieval_mode == "legacy":
+                hits = self._backend.search_hybrid(query, q_vec, top_k=recall_k)
+            else:
+                raise ValueError("Unknown rag_retrieval_mode")
+        with stage("retrieval.rerank"):
+            result = self._maybe_rerank(query, hits, top_k)
+        event("retrieval_result", mode=settings.rag_retrieval_mode, candidates=len(hits),
+              returned=len(result), reranked=self.last_reranked)
+        return result
 
     def _maybe_rerank(
         self, query: str, hits: list[RetrievedChunk], top_k: int,

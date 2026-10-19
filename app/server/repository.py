@@ -416,3 +416,13 @@ def sync_kb_size() -> int:
 
 def sync_kb_meta_value(key: str) -> str:
     return _run(kb_meta_value(key))
+
+
+async def kb_all_chunks():
+    async with _get_session_factory()() as db:
+        rows = (await db.execute(select(KbChunk).order_by(KbChunk.chunk_id))).scalars().all()
+        return [{"chunk_id": r.chunk_id, "doc": r.doc, "section": r.section, "text": r.text} for r in rows]
+
+
+def sync_kb_all_chunks():
+    return _run(kb_all_chunks())

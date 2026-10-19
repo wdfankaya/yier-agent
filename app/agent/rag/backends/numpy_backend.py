@@ -68,6 +68,11 @@ class NumpyBackend(VectorBackend):
             for idx, score in scored[:top_k]
         ]
 
+    def all_chunks(self):
+        if not self._chunks:
+            self.load()
+        return list(self._chunks)
+
     def size(self) -> int:
         if not self._chunks and self._index_path.exists():
             self.load()

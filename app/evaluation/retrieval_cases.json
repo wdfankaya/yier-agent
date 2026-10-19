@@ -1,0 +1,1233 @@
+{
+  "schema_version": 1,
+  "description": "100 AI-authored demo-policy cases. Not human reviewed; not production accuracy.",
+  "corpus_sha256": "ebf42ab5df284be2527cf83ee38feabe93ad0cdd5bcc268209e2126b319e19fc",
+  "corpus": [
+    {
+      "chunk_id": "会员权益#01-00",
+      "doc": "会员权益",
+      "section": "一、会员等级体系",
+      "text": "【会员权益 · 一、会员等级体系】\n「一二商城」会员分为四级：注册会员、白银会员、黄金会员、钻石会员。等级根据近 12 个月内累计实付金额自动升降，每月 1 号结算。\n\n| 等级 | 升级门槛（近 12 个月实付） | 维持门槛 |\n|------|----------------------------|----------|\n| 注册会员 | 完成手机注册 | — |\n| 白银会员 | 累计 1,000 元 | 维持 800 元/年 |\n| 黄金会员 | 累计 5,000 元 | 维持 4,000 元/年 |\n| 钻石会员 | 累计 20,000 元 | 维持 15,000 元/年 |",
+      "version": "4ea9fd35adc137446f904c4616c47db0a4df215b2430f948f12ca7c85d6d71d4"
+    },
+    {
+      "chunk_id": "会员权益#02-00",
+      "doc": "会员权益",
+      "section": "二、各等级核心权益",
+      "text": "【会员权益 · 二、各等级核心权益】\n### 2.1 注册会员\n- 新人专享 30 元无门槛券（注册 7 天内有效）。\n- 生日当月一张 8.8 折券（上限 50 元）。\n\n### 2.2 白银会员\n- 每月 1 张满 99-10 元优惠券。\n- 客服优先排队（普通通道前 30%）。\n- 退换货上门取件费减免 50%。\n\n### 2.3 黄金会员\n- 每月 1 张满 199-30 元优惠券、1 张满 99-10 元券。\n- 全场免邮（不含偏远地区，与店铺规则叠加）。\n- 退换货上门取件免费。\n- 专属客服直通通道。\n\n### 2.4 钻石会员\n- 每月 1 张满 499-80、1 张满 199-30、1 张满 99-10 元券。\n- **全场包邮（含偏远地区）**。\n- 优先发货（24 小时内出库）。\n- 一年 4 次「无忧退」（无需任何理由直接退款，运费全免）。\n- 专属 1V1 客服经理。",
+      "version": "287c33df22b9eb7421e214d94116dc3e7af00e606e6095172e3905f7752e5a7e"
+    },
+    {
+      "chunk_id": "会员权益#03-00",
+      "doc": "会员权益",
+      "section": "三、积分体系",
+      "text": "【会员权益 · 三、积分体系】\n- **获取**：实付 1 元 = 1 积分；评价晒图额外 +20；签到每日 +5。\n- **消耗**：100 积分 = 1 元，结账时直接抵扣，单笔最多抵扣订单金额的 50%。\n- **过期**：积分自获取之日起 24 个月有效，过期清零。",
+      "version": "f879186d3fbfd7f6ae043af2c6e363c0cb999a6083e46f6ac2c8bb6cc46df69a"
+    },
+    {
+      "chunk_id": "会员权益#04-00",
+      "doc": "会员权益",
+      "section": "四、生日特权",
+      "text": "【会员权益 · 四、生日特权】\n- **生日当月**：购物双倍积分。\n- **生日当周**：免费一次专属生日礼盒（限钻石会员）。\n- **生日当天**：一张 88 元无门槛券（限黄金及以上）。",
+      "version": "072f140c7a4342dc9ebd20672980aadcb933086ed92f3f07b327fd8b0d3b00d2"
+    },
+    {
+      "chunk_id": "会员权益#05-00",
+      "doc": "会员权益",
+      "section": "五、常见问题",
+      "text": "【会员权益 · 五、常见问题】\n- **Q：等级能否手动升级？**\n  A：不可以，按近 12 个月实付金额自动结算。\n- **Q：退款是否会扣减升级所需金额？**\n  A：会，退款成功后对应消费金额从累计中扣除。\n- **Q：会员费用怎么算？**\n  A：一二商城会员体系完全免费，不收取年费。",
+      "version": "8611bee24d00ac8a66cef273faf6c95b23b5372a22a2509b568ec6b92f03601c"
+    },
+    {
+      "chunk_id": "常见问题FAQ#01-00",
+      "doc": "常见问题FAQ",
+      "section": "一、订单与支付",
+      "text": "【常见问题FAQ · 一、订单与支付】\n### Q1：下单后多久发货？\n普通现货商品商家承诺 48 小时内出库，预售商品按详情页公示发货时间为准。如下单超过 72 小时仍未发货，可联系客服催单或申请「未发货退款」。\n\n### Q2：支持哪些支付方式？\n目前支持微信支付、支付宝、银联快捷支付、Apple Pay、花呗分期（3/6/12 期）。暂不支持货到付款与境外信用卡。\n\n### Q3：能否修改订单信息？\n- **未发货**：可在订单详情页自助修改收货地址（24 小时内一次机会），商品规格不可修改，需取消重下。\n- **已发货**：地址不可修改，可联系快递员或在派件地址变更。\n\n### Q4：订单显示「已支付」但平台未识别怎么办？\n通常 5 分钟内自动同步。超过 30 分钟仍未同步，请联系客服并提供支付凭证截图（含交易号、金额、时间）。",
+      "version": "d3cd91076acd83d0950bcf47dc83609b12fd3945ecfc3c07902da40c4a4f9b41"
+    },
+    {
+      "chunk_id": "常见问题FAQ#02-00",
+      "doc": "常见问题FAQ",
+      "section": "二、商品与价格",
+      "text": "【常见问题FAQ · 二、商品与价格】\n### Q5：商品降价了能否退差价？\n- **价保期限**：签收后 7 天内（钻石会员 15 天）。\n- **价保规则**：仅同一店铺、同一商品（含规格颜色）的实付差价（含券后价）。\n- **不参与**：限时秒杀、清仓特价、定金尾款拆单价不参与价保。\n\n### Q6：商品页缺货怎么办？\n点击「到货提醒」，到货后将通过短信和站内信通知。注：补货时间不固定，热门商品可能数小时即售罄。\n\n### Q7：发现假货怎么办？\n请保留商品、包装、快递面单与吊牌，通过「申请售后 → 真假鉴别」上传照片。经品牌方鉴定为假货的，赔付订单实付金额的 3 倍（最低 500 元）。",
+      "version": "ab8293b77fe0170b4a0c2c6ef502a6bbd83fba2a4d91234c44a49d402178daf2"
+    },
+    {
+      "chunk_id": "常见问题FAQ#03-00",
+      "doc": "常见问题FAQ",
+      "section": "三、售后服务",
+      "text": "【常见问题FAQ · 三、售后服务】\n### Q8：寄回商品丢失了怎么办？\n请联系当时承运的快递公司发起索赔，并将快递公司出具的丢件证明发给客服。客服根据证明协助办理退款，无需顾客承担丢件损失。\n\n### Q9：退款多久到账？\n- **微信/支付宝**：1-3 个工作日。\n- **银行卡**：3-7 个工作日。\n- **花呗/信用卡分期**：当期账单已出的，退款抵扣下期账单。\n\n### Q10：商品保修期内坏了怎么办？\n3C 数码、家电类商品保修期内出现非人为故障，由品牌方授权售后处理。可在「我的订单 → 申请售后 → 品牌维修」走线上报修流程，无需邮寄到「一二商城」仓库。\n\n### Q11：怎么根据订单号跟进售后进度？\n售后进度需凭订单号查询。请在「我的订单 → 申请售后」中找到对应订单（例如订单号 ORD-20240115-001），即可查看审核、寄回与退款各环节进度；若提示异常，可凭该订单号联系人工客服。",
+      "version": "3f5c382c2cd38873eba061b4536559159f53982691451401624a7167b048cd1a"
+    },
+    {
+      "chunk_id": "常见问题FAQ#04-00",
+      "doc": "常见问题FAQ",
+      "section": "四、账户与安全",
+      "text": "【常见问题FAQ · 四、账户与安全】\n### Q12：忘记密码怎么办？\n通过登录页「忘记密码」，使用注册手机号接收验证码后重置。如手机号已停用，需提供身份证照片+人脸认证申诉，5 个工作日内审核。\n\n### Q13：账户被盗如何处理？\n立即修改密码并解绑支付方式，然后联系客服冻结账户。如已发生未授权交易，提供报警回执，平台协助资金追讨。\n\n### Q14：能否注销账户？\n可以，前往「设置 → 账户安全 → 注销账户」。注销前请先处理未完成订单与未使用的优惠券、积分。注销后数据保留 30 天，30 天内可联系客服恢复。",
+      "version": "e86afd0db5bf3b8c2d454b587743bdc2e9b1e2c0a41025d0a8e4a19227501bd1"
+    },
+    {
+      "chunk_id": "退换货政策#01-00",
+      "doc": "退换货政策",
+      "section": "一、七天无理由退货",
+      "text": "【退换货政策 · 一、七天无理由退货】\n### 1.1 适用范围\n自顾客签收商品之日起 7 天内（含第 7 天），在不影响商品二次销售的前提下，可申请「七天无理由退货」。这里的「不影响二次销售」指：商品本体、吊牌、包装、配件、赠品齐全，未洗涤、未使用、未损坏。\n\n### 1.2 不适用商品\n以下商品不支持七天无理由退货：\n- **个人定制类商品**：刻字、刻名、定制尺寸的鞋服等。\n- **鲜活易腐商品**：水果、海鲜、生鲜冷链等。\n- **数字化商品**：已激活的软件序列号、电子卡券、电子书。\n- **拆封后影响人身安全或健康的商品**：化妆品、内衣、贴身衣物（已拆封）。\n\n### 1.3 运费规则\n七天无理由退货由顾客承担退货运费，建议使用平台合作的「上门取件」服务（顺丰/圆通/京东物流），运费 12 元起，从退款金额中扣除。",
+      "version": "245e2f9f77de9bba5dee0481e36861619af08a7a62d0f5520e73d48f460d46d6"
+    },
+    {
+      "chunk_id": "退换货政策#02-00",
+      "doc": "退换货政策",
+      "section": "二、质量问题退换货",
+      "text": "【退换货政策 · 二、质量问题退换货】\n### 2.1 适用情形\n- 商品存在明显瑕疵（破损、缺件、错发、漏发）。\n- 商品功能性故障，且经客服或品牌方确认为质量问题。\n- 商品与详情页描述严重不符。\n\n### 2.2 时效与运费\n质量问题退换货时效为签收后 15 天内（含第 15 天），运费由「一二商城」承担。退款将在仓库收货并质检通过后 1-3 个工作日内原路退回。\n\n### 2.3 举证材料\n申请质量问题退换货时，建议拍摄：\n1. 商品外观照片（瑕疵处特写 + 整体照）。\n2. 包装外观照片（用于判定运输损坏责任）。\n3. 故障演示视频（电子产品适用）。",
+      "version": "6d628aceb3f28639842309f9d3cc945ff7f3f624ce363c9dbd32e9db5612801c"
+    },
+    {
+      "chunk_id": "退换货政策#03-00",
+      "doc": "退换货政策",
+      "section": "三、退款流程",
+      "text": "【退换货政策 · 三、退款流程】\n1. 在「我的订单」中找到对应订单，点击「申请退款」。\n2. 选择退款原因并提交，可附图片说明。\n3. 客服或品牌方在 24 小时内审核（敏感商品 48 小时）。\n4. 审核通过后，按提示寄回商品（如需）。\n5. 仓库签收并质检通过后，款项原路退回支付账户。",
+      "version": "cec9ac315be8ff6030178cf90a857a0acd4728e6647013f03b28c620e6aed178"
+    },
+    {
+      "chunk_id": "退换货政策#04-00",
+      "doc": "退换货政策",
+      "section": "四、特殊场景",
+      "text": "【退换货政策 · 四、特殊场景】\n### 4.1 仅退款（不退货）\n适用于商品未发货、商品丢失、商家承认质量问题但不要求退回等场景。仅退款审核通过后 1-3 个工作日内原路退回。\n\n### 4.2 拒收退款\n顾客在签收前拒收快递，包裹原路返回仓库后，系统将自动发起退款，时效约 5-7 个工作日。\n\n### 4.3 部分退款\n对于多件商品订单，支持只退其中一件或几件，退款金额按比例计算。",
+      "version": "4dee1fc3211cf5a1074e9b364fb9ef4373f16bade563f23597d02a33944239cf"
+    },
+    {
+      "chunk_id": "配送说明#01-00",
+      "doc": "配送说明",
+      "section": "一、配送范围",
+      "text": "【配送说明 · 一、配送范围】\n「一二商城」目前覆盖中国大陆 31 个省、自治区、直辖市，部分偏远地区（西藏阿里、新疆喀什以西、海南三沙）需要 1-3 个工作日额外发货时间。港澳台及海外暂不直接发货，需通过「一二商城国际」入口下单。",
+      "version": "09e66636137281c09890af2766650edb50e9997d8239451c33db1a41f64fb1a7"
+    },
+    {
+      "chunk_id": "配送说明#02-00",
+      "doc": "配送说明",
+      "section": "二、配送时效",
+      "text": "【配送说明 · 二、配送时效】\n| 区域 | 普通快递 | 当日达 | 次日达 |\n|------|----------|--------|--------|\n| 一线城市（北京、上海、广州、深圳） | 2-3 天 | 支持 | 支持 |\n| 省会城市 | 2-4 天 | 部分支持 | 支持 |\n| 地级市 | 3-5 天 | 不支持 | 部分支持 |\n| 县级及以下 | 4-7 天 | 不支持 | 不支持 |\n\n时效从「商家发货」开始计算，不包含退换货寄回与重发时间。订单中含「预售」「定制」「家具大件」标签的商品，按详情页公示时效为准。",
+      "version": "399985796b98f8fab7e7290b87d84f9e1f5dccfcbe909e3608dd3cb1f9a923f4"
+    },
+    {
+      "chunk_id": "配送说明#03-00",
+      "doc": "配送说明",
+      "section": "三、运费规则",
+      "text": "【配送说明 · 三、运费规则】\n- **包邮门槛**：单笔订单满 99 元包邮，不满则收取 8 元基础运费。\n- **大件商品**：家电、家具、健身器材按体积重计费，详情页明示。\n- **偏远地区**：新疆、西藏、青海部分区域不参与全场包邮，加收 20 元起。\n- **会员特权**：钻石会员全场包邮，无需满 99 元。",
+      "version": "443fb58626eda789f4ffb7f703d0d9456ac3d81c82a84949fb3ab232af1dd8dd"
+    },
+    {
+      "chunk_id": "配送说明#04-00",
+      "doc": "配送说明",
+      "section": "四、合作快递",
+      "text": "【配送说明 · 四、合作快递】\n一二商城已接入顺丰速运、京东物流、圆通速递、中通快递、韵达快递、邮政 EMS。下单时由系统按照「就近仓库 + 时效优先」自动分配，不支持顾客指定快递公司，但可在「订单详情」中查看实际承运商。",
+      "version": "6d64d4b27d23da674cce196b6de363aa20493c90bd42dbdc31a20d4f5091d49e"
+    },
+    {
+      "chunk_id": "配送说明#05-00",
+      "doc": "配送说明",
+      "section": "五、收货须知",
+      "text": "【配送说明 · 五、收货须知】\n1. **当面验货**：贵重商品（手机、电脑、奢侈品）请务必当面验货后再签收，破损请直接拒收。\n2. **代收点取件**：若选择菜鸟驿站、丰巢、京东自提柜代收，请在 48 小时内取件，超时可能按弃件处理。\n3. **签收即视同确认**：签收后发现外观破损，请在 24 小时内联系客服并提供包裹照片。",
+      "version": "8cf0b973259cdf12af419933566a66eb1fda03ff2dc7fd6a6e7b8191fee6aff7"
+    },
+    {
+      "chunk_id": "配送说明#06-00",
+      "doc": "配送说明",
+      "section": "六、配送异常",
+      "text": "【配送说明 · 六、配送异常】\n- **无人签收**：快递员将再尝试投递 1-2 次，仍无人签收则联系顾客或转代收点。\n- **物流停滞**：超过 3 天未更新轨迹，可联系客服发起「物流催单」。\n- **派件错误**：若快递被错派至他人，可凭面单号申请「定位寻件」。",
+      "version": "0a737957658750ed693417f345f72cdeba07c138eb00901f4fec2b8be4d5c12c"
+    }
+  ],
+  "cases": [
+    {
+      "id": "rag-001",
+      "query": "会员等级多久重新结算？",
+      "group": "会员权益#01-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-002",
+      "query": "升级白银会员要消费多少？",
+      "group": "会员权益#01-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-003",
+      "query": "黄金会员维持等级需要多少消费？",
+      "group": "会员权益#01-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-004",
+      "query": "钻石会员的升级金额与维持金额相同吗？",
+      "group": "会员权益#01-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-005",
+      "query": "会员是按今年自然年还是最近十二个月的消费计算？",
+      "group": "会员权益#01-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-006",
+      "query": "新注册用户的无门槛券多久过期？",
+      "group": "会员权益#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-007",
+      "query": "白银会员退货上门取件是否全免？",
+      "group": "会员权益#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-008",
+      "query": "黄金会员每月能领什么优惠券？",
+      "group": "会员权益#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-009",
+      "query": "钻石会员每年有几次无忧退？",
+      "group": "会员权益#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-010",
+      "query": "钻石会员优先发货是多久出库？",
+      "group": "会员权益#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-011",
+      "query": "消费一元能获得几个积分？",
+      "group": "会员权益#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-012",
+      "query": "晒图评价额外送多少积分？",
+      "group": "会员权益#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-013",
+      "query": "签到每天获得多少积分？",
+      "group": "会员权益#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-014",
+      "query": "积分能抵扣整个订单的钱吗？",
+      "group": "会员权益#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-015",
+      "query": "积分多久失效？",
+      "group": "会员权益#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-016",
+      "query": "生日月份购物积分有什么变化？",
+      "group": "会员权益#04-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-017",
+      "query": "谁可以领取生日礼盒？",
+      "group": "会员权益#04-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-018",
+      "query": "生日礼盒是在生日当天还是当周领取？",
+      "group": "会员权益#04-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-019",
+      "query": "黄金会员生日当天送什么？",
+      "group": "会员权益#04-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-020",
+      "query": "白银会员生日当天能拿八十八元券吗？",
+      "group": "会员权益#04-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-021",
+      "query": "会员要交年费吗？",
+      "group": "会员权益#05-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-022",
+      "query": "能让客服手动升级会员吗？",
+      "group": "会员权益#05-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-023",
+      "query": "退款成功后会影响升级累计金额吗？",
+      "group": "会员权益#05-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-024",
+      "query": "付费能直接购买钻石等级吗？",
+      "group": "会员权益#05-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-025",
+      "query": "会员等级能自己选择吗？",
+      "group": "会员权益#05-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "会员权益#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-026",
+      "query": "现货下单后多久出库？",
+      "group": "常见问题FAQ#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-027",
+      "query": "超过七十二小时没有发货可以怎么处理？",
+      "group": "常见问题FAQ#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-028",
+      "query": "商城支持货到付款吗？",
+      "group": "常见问题FAQ#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-029",
+      "query": "没发货的订单能改商品颜色吗？",
+      "group": "常见问题FAQ#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-030",
+      "query": "支付半小时还没同步要提供什么凭证？",
+      "group": "常见问题FAQ#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-031",
+      "query": "钻石会员签收后价保期限是多少？",
+      "group": "常见问题FAQ#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-032",
+      "query": "秒杀商品降价可以申请价保吗？",
+      "group": "常见问题FAQ#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-033",
+      "query": "缺货时怎样订阅到货通知？",
+      "group": "常见问题FAQ#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-034",
+      "query": "发现假货要保留哪些材料？",
+      "group": "常见问题FAQ#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-035",
+      "query": "确认是假货以后按什么标准赔付？",
+      "group": "常见问题FAQ#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-036",
+      "query": "寄回退货包裹丢了该找谁？",
+      "group": "常见问题FAQ#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-037",
+      "query": "银行卡退款一般几天到账？",
+      "group": "常见问题FAQ#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-038",
+      "query": "花呗账单已出，退款如何入账？",
+      "group": "常见问题FAQ#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-039",
+      "query": "电器保修故障要寄到商城仓库吗？",
+      "group": "常见问题FAQ#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-040",
+      "query": "怎样用 ORD-20240115-001 跟进售后进度？",
+      "group": "常见问题FAQ#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-041",
+      "query": "忘记登录密码怎么找回？",
+      "group": "常见问题FAQ#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-042",
+      "query": "注册手机号停用了如何申诉？",
+      "group": "常见问题FAQ#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-043",
+      "query": "账号被盗应先做什么？",
+      "group": "常见问题FAQ#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-044",
+      "query": "注销账户前要处理什么？",
+      "group": "常见问题FAQ#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-045",
+      "query": "注销二十天还能恢复账号吗？",
+      "group": "常见问题FAQ#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "常见问题FAQ#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-046",
+      "query": "签收第七天还可以无理由退货吗？",
+      "group": "退换货政策#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-047",
+      "query": "衣服已经洗过但没有破损，能无理由退吗？",
+      "group": "退换货政策#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-048",
+      "query": "刻字定制商品支持七天无理由吗？",
+      "group": "退换货政策#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-049",
+      "query": "拆封的化妆品可以无理由退货吗？",
+      "group": "退换货政策#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-050",
+      "query": "普通用户七天无理由退货的运费谁承担？",
+      "group": "退换货政策#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-051",
+      "query": "商品漏发算质量售后情形吗？",
+      "group": "退换货政策#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-052",
+      "query": "质量问题签收十五天还可以退吗？",
+      "group": "退换货政策#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-053",
+      "query": "确认质量问题后退货运费谁付？",
+      "group": "退换货政策#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-054",
+      "query": "质量问题商品仓库质检通过后多久退款？",
+      "group": "退换货政策#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-055",
+      "query": "电子产品故障退货建议提供哪些证据？",
+      "group": "退换货政策#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-056",
+      "query": "申请退款入口在哪里？",
+      "group": "退换货政策#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-057",
+      "query": "提交退款时要选择什么？",
+      "group": "退换货政策#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-058",
+      "query": "普通商品退款申请多久审核？",
+      "group": "退换货政策#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-059",
+      "query": "敏感商品退款审核要多久？",
+      "group": "退换货政策#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-060",
+      "query": "退款审核通过以后通常还有哪些步骤？",
+      "group": "退换货政策#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-061",
+      "query": "商品还没发货可以仅退款吗？",
+      "group": "退换货政策#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-062",
+      "query": "商家承认质量问题且不要求寄回，能仅退款吗？",
+      "group": "退换货政策#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-063",
+      "query": "拒收包裹后退款大约要多久？",
+      "group": "退换货政策#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-064",
+      "query": "一单买了多件能只退一件吗？",
+      "group": "退换货政策#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-065",
+      "query": "仅退款审核通过以后多久退回原账户？",
+      "group": "退换货政策#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "退换货政策#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-066",
+      "query": "可以直接寄到香港吗？",
+      "group": "配送说明#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-067",
+      "query": "想寄到海外应该从哪个入口下单？",
+      "group": "配送说明#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-068",
+      "query": "新疆喀什以西发货是否需要额外时间？",
+      "group": "配送说明#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-069",
+      "query": "西藏阿里额外发货时间大约是多少？",
+      "group": "配送说明#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-070",
+      "query": "海南三沙的发货时间和普通地区相同吗？",
+      "group": "配送说明#01-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#01-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-071",
+      "query": "广州普通快递几天到？",
+      "group": "配送说明#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-072",
+      "query": "省会城市支持次日达吗？",
+      "group": "配送说明#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-073",
+      "query": "县城支持当日达或者次日达吗？",
+      "group": "配送说明#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-074",
+      "query": "预计送达时间从付款还是发货开始计算？",
+      "group": "配送说明#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-075",
+      "query": "预售家具能按普通快递时效要求送达吗？",
+      "group": "配送说明#02-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-076",
+      "query": "普通订单满多少包邮？",
+      "group": "配送说明#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-077",
+      "query": "订单没满包邮门槛收多少基础运费？",
+      "group": "配送说明#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-078",
+      "query": "家具大件按什么方式收运费？",
+      "group": "配送说明#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-079",
+      "query": "偏远地区额外运费从多少起？",
+      "group": "配送说明#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#03-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-080",
+      "query": "钻石会员不足九十九元的订单是否包邮？",
+      "group": "配送说明#03-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#03-00",
+        "会员权益#02-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-081",
+      "query": "可以指定用顺丰配送吗？",
+      "group": "配送说明#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-082",
+      "query": "如何知道订单实际承运的快递公司？",
+      "group": "配送说明#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-083",
+      "query": "商城选择快递公司的规则是什么？",
+      "group": "配送说明#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-084",
+      "query": "商城合作快递里有没有邮政 EMS？",
+      "group": "配送说明#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-085",
+      "query": "京东物流和圆通是否属于合作承运商？",
+      "group": "配送说明#04-00",
+      "split": "dev",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#04-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-086",
+      "query": "贵重手机签收前应注意什么？",
+      "group": "配送说明#05-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-087",
+      "query": "当面验货发现包裹破损应如何处理？",
+      "group": "配送说明#05-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-088",
+      "query": "菜鸟驿站的包裹需要多久内取走？",
+      "group": "配送说明#05-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-089",
+      "query": "自提柜超时不取件会怎样？",
+      "group": "配送说明#05-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-090",
+      "query": "签收后才发现外观破损，多久内联系并提供什么材料？",
+      "group": "配送说明#05-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#05-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-091",
+      "query": "第一次投递无人签收会继续配送吗？",
+      "group": "配送说明#06-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#06-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-092",
+      "query": "多次投递无人签收后快递会如何处理？",
+      "group": "配送说明#06-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#06-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-093",
+      "query": "物流三天不更新可以申请什么服务？",
+      "group": "配送说明#06-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#06-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-094",
+      "query": "包裹错送给别人要怎样找回？",
+      "group": "配送说明#06-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#06-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-095",
+      "query": "申请定位寻件需要提供什么号码？",
+      "group": "配送说明#06-00",
+      "split": "test",
+      "answerable": true,
+      "gold_chunk_ids": [
+        "配送说明#06-00"
+      ],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-096",
+      "query": "明年春节期间商城每天几点停止发货？",
+      "group": "unknown",
+      "split": "test",
+      "answerable": false,
+      "gold_chunk_ids": [],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-097",
+      "query": "企业采购能否开增值税专用发票？",
+      "group": "unknown",
+      "split": "test",
+      "answerable": false,
+      "gold_chunk_ids": [],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-098",
+      "query": "宠物食品开封后的营养损失是多少？",
+      "group": "unknown",
+      "split": "test",
+      "answerable": false,
+      "gold_chunk_ids": [],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-099",
+      "query": "商城明天会上线什么优惠活动？",
+      "group": "unknown",
+      "split": "test",
+      "answerable": false,
+      "gold_chunk_ids": [],
+      "review_status": "ai_authored_unreviewed"
+    },
+    {
+      "id": "rag-100",
+      "query": "上海线下门店的详细地址和营业时间是什么？",
+      "group": "unknown",
+      "split": "test",
+      "answerable": false,
+      "gold_chunk_ids": [],
+      "review_status": "ai_authored_unreviewed"
+    }
+  ]
+}

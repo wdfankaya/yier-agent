@@ -86,6 +86,11 @@
       <label>访问令牌 <input id="api-token" type="password" autocomplete="off" placeholder="输入服务端配置的令牌" /></label>
     </div>
     <div id="log"></div>
+    <div class="row">
+      <button id="workflow-status" type="button">找回待确认操作</button>
+      <button id="workflow-recover" type="button">恢复中断流程</button>
+      <button id="trace" type="button">查看本次请求追踪</button>
+    </div>
     <div id="confirm">
       <div>即将执行 <strong id="c-tool"></strong> · 订单 <strong id="c-order"></strong> · 金额 <strong id="c-amt"></strong></div>
       <div id="c-args"></div>
@@ -109,6 +114,7 @@
     const sendBtn = $("send");
     const confirmBox = $("confirm");
     let pendingToken = null;
+    let lastTrace = null;
 
     sidEl.value = localStorage.getItem("yier-demo-sid") || ("demo-" + Math.random().toString(16).slice(2, 10));
     sidEl.addEventListener("change", () => localStorage.setItem("yier-demo-sid", sidEl.value));
@@ -159,6 +165,7 @@
 
     function handle(ev) {
       const t = ev.type;
+      if (t === 'session') lastTrace = ev.request_id;
       if (t === "thought") addEv("thought", `<div class="k">thought</div>${esc(ev.content || "")}`);
       else if (t === "route") addEv("tool", `<div class="k">route</div>${esc(ev.agent || "")}`);
       else if (t === "tool_call") addEv("tool", `<div class="k">tool_call</div>${esc(ev.name)} ${esc(JSON.stringify(ev.arguments || {}))}`);
@@ -218,6 +225,9 @@
           return;
         }
         hideConfirm();
+        if (body.request_id) lastTrace = body.request_id;
+        if (body.reply) addEv('final',esc(body.reply));
+        if (body.pending) showConfirm(body.pending);
         addEv("final", `<div class="k">confirm</div>${({succeeded:"执行成功",failed:"执行失败",unknown:"结果未知，请核实后再操作",denied:"已拒绝"})[body.execution_status] || "请查看结果"} ${esc(JSON.stringify(body.result || body))}`);
       } catch (e) {
         addEv("error", `<div class="k">confirm</div>${esc(e.message || e)}`);
@@ -225,6 +235,27 @@
     }
     $("btn-yes").onclick = () => decide(true);
     $("btn-no").onclick = () => decide(false);
+    async function inspectRequest(path, method='GET') {
+      const res = await fetch(path,{method,headers:{Authorization:'Bearer '+tokenEl.value.trim()}});
+      if (!res.ok) throw new Error('HTTP '+res.status);
+      return res.json();
+    }
+    async function workflowAction(recover) {
+      try {
+        const body = await inspectRequest('/api/workflows/'+encodeURIComponent(sidEl.value)+(recover?'/recover':''),recover?'POST':'GET');
+        if (body.pending) showConfirm(body.pending); else hideConfirm();
+        addEv('tool',esc(body.reply || (body.pending?'已找回待确认操作':body.resumable?'有中断流程，可点击恢复':'没有待确认操作')));
+      } catch(e) { addEv('error',esc(e.message)); }
+    }
+    $('workflow-status').onclick=()=>workflowAction(false);
+    $('workflow-recover').onclick=()=>workflowAction(true);
+    $('trace').onclick=async()=>{
+      if (!lastTrace) { addEv('tool','请先发送一条消息。'); return; }
+      try {
+        const body=await inspectRequest('/api/traces/'+encodeURIComponent(lastTrace));
+        addEv('tool','<pre style="white-space:pre-wrap">'+esc(JSON.stringify(body,null,2))+'</pre>');
+      } catch(e) { addEv('error',esc(e.message)); }
+    };
     msgEl.addEventListener("keydown", (e) => {
       if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); sendBtn.click(); }
     });

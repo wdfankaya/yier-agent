@@ -1,0 +1,342 @@
+{
+  "kind": "real_model_graph_smoke",
+  "model": "deepseek-v4-flash",
+  "business_tool": "static_mock_no_money_movement",
+  "phases": [
+    {
+      "phase": "prepare",
+      "pending": true,
+      "reply": "操作已暂停，请确认或拒绝；确认状态已保存，可在重启后继续。",
+      "elapsed_ms": 3972.21,
+      "trace": {
+        "request_id": "3b093b47d8644024b09230e0319da930",
+        "created": 1792402415.5748956,
+        "events": [
+          {
+            "time": 1792402415.5763352,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "4e80235b857d42f08714dea5065405b9",
+            "stage": "model.generate",
+            "parent_span_id": "a3439f65faa04a4b8869aa8cca97ba0d",
+            "elapsed_ms": 1532.2,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402415.590528,
+            "event": "model_usage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "a3439f65faa04a4b8869aa8cca97ba0d",
+            "input_tokens": 2707,
+            "output_tokens": 146,
+            "pricing_configured": false,
+            "estimated_cost": 0.0
+          },
+          {
+            "time": 1792402415.604626,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "a3439f65faa04a4b8869aa8cca97ba0d",
+            "stage": "workflow.model",
+            "parent_span_id": null,
+            "elapsed_ms": 1608.96,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402415.6199188,
+            "event": "workflow_route",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "route": "tools",
+            "tool_count": 2
+          },
+          {
+            "time": 1792402415.6353092,
+            "event": "tool_validation",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "tool": "query_order",
+            "valid": true
+          },
+          {
+            "time": 1792402415.6552105,
+            "event": "tool_outcome",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "419c3b3747fd47f8816541ad6766c44f",
+            "tool": "query_order",
+            "status": "succeeded"
+          },
+          {
+            "time": 1792402415.6708667,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "419c3b3747fd47f8816541ad6766c44f",
+            "stage": "tool",
+            "parent_span_id": null,
+            "elapsed_ms": 35.84,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402415.6842015,
+            "event": "workflow_tool",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "tool": "query_order",
+            "status": "completed"
+          },
+          {
+            "time": 1792402415.7007902,
+            "event": "tool_validation",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "tool": "load_skill",
+            "valid": true
+          },
+          {
+            "time": 1792402415.7216675,
+            "event": "tool_outcome",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "f92e076f22cc4aa3b33969cfc6931234",
+            "tool": "load_skill",
+            "status": "succeeded"
+          },
+          {
+            "time": 1792402415.737026,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "f92e076f22cc4aa3b33969cfc6931234",
+            "stage": "tool",
+            "parent_span_id": null,
+            "elapsed_ms": 36.49,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402415.752536,
+            "event": "workflow_tool",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "tool": "load_skill",
+            "status": "completed"
+          },
+          {
+            "time": 1792402417.7965245,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "c9b772694c4549688809897f3f78905b",
+            "stage": "model.generate",
+            "parent_span_id": "bae68dd6053d4af481c019072afaca2d",
+            "elapsed_ms": 2028.99,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402417.8061068,
+            "event": "model_usage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "bae68dd6053d4af481c019072afaca2d",
+            "input_tokens": 3725,
+            "output_tokens": 336,
+            "pricing_configured": false,
+            "estimated_cost": 0.0
+          },
+          {
+            "time": 1792402417.8109627,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "bae68dd6053d4af481c019072afaca2d",
+            "stage": "workflow.model",
+            "parent_span_id": null,
+            "elapsed_ms": 2043.79,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402417.8157961,
+            "event": "workflow_route",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "route": "tools",
+            "tool_count": 2
+          },
+          {
+            "time": 1792402417.8218772,
+            "event": "tool_validation",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "tool": "recall_user_memory",
+            "valid": true
+          },
+          {
+            "time": 1792402417.8274276,
+            "event": "tool_outcome",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "1ed8cae0a8c446fb98f09f728e37cbfd",
+            "tool": "recall_user_memory",
+            "status": "failed"
+          },
+          {
+            "time": 1792402417.8406606,
+            "event": "stage",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": "1ed8cae0a8c446fb98f09f728e37cbfd",
+            "stage": "tool",
+            "parent_span_id": null,
+            "elapsed_ms": 18.83,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402417.8541727,
+            "event": "workflow_tool",
+            "request_id": "3b093b47d8644024b09230e0319da930",
+            "span_id": null,
+            "tool": "recall_user_memory",
+            "status": "completed"
+          }
+        ],
+        "metrics": {
+          "input_tokens": 6432,
+          "output_tokens": 482,
+          "estimated_cost": 0.0,
+          "pricing_configured": false,
+          "embedding_tokens": 0,
+          "first_response_ms": null,
+          "duration_ms": null,
+          "tool_calls": 3,
+          "invalid_tool_arguments": 0
+        }
+      }
+    },
+    {
+      "phase": "resume",
+      "executed": true,
+      "execution_status": "succeeded",
+      "reply": "已为您处理，以下是订单信息和退款结果：\n\n**订单信息**\n- 订单号：ORD-20240120-002\n- 商品：Apple AirPods Pro 2 ×1（¥1799.00）、AirPods 保护壳（透明）×1（¥29.90）\n- 订单金额：**¥1828.90**\n- 下单时间：2024-01-20 09:15\n- 订单状态：**待发货**，尚未发货，也没有物流单号\n\n**退款说明**\n由于订单还未发货，可以直接取消订单并退款，**无需寄回商品**；退款原因为「不想要了」。预计 **1–3 个工作日**原路退回。\n\n**已受理结果**\n系统记录这次操作已确认（确认状态：approved），退款申请已提交成功。\n\n> ⚠️ 需要提醒您：本次是**模拟退款**（演示环境），并未真实取消订单或转移资金，真实款项不会实际变动。\n\n如果您其实还没想好要不要退，或者希望改成换货或部分退，随时告诉我，我可以帮您进一步处理。还有其他需要帮忙的吗？",
+      "elapsed_ms": 9569.39,
+      "trace": {
+        "request_id": "e8e381a0ea034562bd92e06913c8c053",
+        "created": 1792402417.9292748,
+        "events": [
+          {
+            "time": 1792402417.9307096,
+            "event": "confirmation_resumed",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": null,
+            "wait_ms": 59.59
+          },
+          {
+            "time": 1792402417.964352,
+            "event": "tool_validation",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": null,
+            "tool": "apply_refund",
+            "valid": true
+          },
+          {
+            "time": 1792402417.9783304,
+            "event": "tool_outcome",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "0cad5a8c56f44aefa7368c8762ccbc9f",
+            "tool": "apply_refund",
+            "status": "succeeded"
+          },
+          {
+            "time": 1792402417.9930418,
+            "event": "stage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "0cad5a8c56f44aefa7368c8762ccbc9f",
+            "stage": "tool",
+            "parent_span_id": null,
+            "elapsed_ms": 28.62,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402418.0238283,
+            "event": "workflow_tool",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": null,
+            "tool": "apply_refund",
+            "status": "completed"
+          },
+          {
+            "time": 1792402420.917521,
+            "event": "stage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "ca504dfdba214cc5b348aefaa8579eb1",
+            "stage": "model.generate",
+            "parent_span_id": "0446f2abeb054dc4877b83765fb1b426",
+            "elapsed_ms": 2877.4,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402420.9272406,
+            "event": "model_usage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "0446f2abeb054dc4877b83765fb1b426",
+            "input_tokens": 4160,
+            "output_tokens": 479,
+            "pricing_configured": false,
+            "estimated_cost": 0.0
+          },
+          {
+            "time": 1792402420.9324837,
+            "event": "stage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "0446f2abeb054dc4877b83765fb1b426",
+            "stage": "workflow.model",
+            "parent_span_id": null,
+            "elapsed_ms": 2893.03,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402420.9371626,
+            "event": "workflow_route",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": null,
+            "route": "answer",
+            "tool_count": 0
+          },
+          {
+            "time": 1792402421.0309482,
+            "event": "stage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "7cb475d5d0ea4bdb860c83b336152eb6",
+            "stage": "model.structure",
+            "parent_span_id": null,
+            "elapsed_ms": 72.98,
+            "outcome": "error"
+          },
+          {
+            "time": 1792402427.4548812,
+            "event": "stage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": "6faeb65b063545ca8b7ee40229718cbc",
+            "stage": "model.generate",
+            "parent_span_id": null,
+            "elapsed_ms": 6407.29,
+            "outcome": "ok"
+          },
+          {
+            "time": 1792402427.468585,
+            "event": "model_usage",
+            "request_id": "e8e381a0ea034562bd92e06913c8c053",
+            "span_id": null,
+            "input_tokens": 410,
+            "output_tokens": 1292,
+            "pricing_configured": false,
+            "estimated_cost": 0.0
+          }
+        ],
+        "metrics": {
+          "input_tokens": 4570,
+          "output_tokens": 1771,
+          "estimated_cost": 0.0,
+          "pricing_configured": false,
+          "embedding_tokens": 0,
+          "first_response_ms": null,
+          "duration_ms": null,
+          "tool_calls": 1,
+          "invalid_tool_arguments": 0
+        }
+      }
+    }
+  ],
+  "passed": true
+}

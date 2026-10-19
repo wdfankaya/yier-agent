@@ -39,6 +39,10 @@ class VectorBackend(ABC):
     # 是否有真正的词项检索 lane（决定 search_hybrid 是真混合还是纯向量）
     supports_hybrid: bool = False
 
+    def all_chunks(self) -> list[Chunk]:
+        """Snapshot of the indexed corpus, not the possibly newer source directory."""
+        raise NotImplementedError("This backend does not expose its indexed corpus")
+
     @abstractmethod
     def upsert(
         self,

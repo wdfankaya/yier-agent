@@ -111,6 +111,12 @@ class ToolManager:
     def tool_definitions(self) -> list[dict]:
         return self._tool_defs
 
+    def validated_arguments(self,name,arguments):
+        source=self._tool_source.get(name)
+        if source is None:
+            raise ToolInputError([{'field':[],'type':'unknown_tool','message':'工具不在白名单内'}])
+        return validate_arguments(name,arguments) if source=='local' else parse_arguments(arguments)
+
     def execute_tool(self, name: str, arguments: dict) -> str:
         """根据工具来源分发调用。敏感工具先过 HITL 闸，未授权不执行。"""
         source = self._tool_source.get(name)
@@ -119,7 +125,9 @@ class ToolManager:
         try:
             arguments = validate_arguments(name, arguments) if source == "local" else parse_arguments(arguments)
         except ToolInputError as exc:
+            event('tool_validation', tool=name, valid=False)
             return json.dumps(exc.payload(name), ensure_ascii=False)
+        event('tool_validation', tool=name, valid=True)
         if self.hitl is not None and self.is_sensitive(name):
             blocked = self.hitl.intercept(name, arguments or {})
             if blocked is not None:
@@ -165,7 +173,14 @@ class ToolManager:
         task.add_done_callback(completed)
         with stage("tool"):
             try:
-                return await asyncio.wait_for(asyncio.shield(task), timeout=settings.tool_timeout)
+                raw = await asyncio.wait_for(asyncio.shield(task), timeout=settings.tool_timeout)
+                try:
+                    result = json.loads(raw)
+                    status = result.get('status') or ('succeeded' if result.get('success') else 'failed' if result.get('error') else 'completed')
+                except (ValueError,TypeError,AttributeError):
+                    status = 'unknown'
+                event('tool_outcome', tool=name, status=status)
+                return raw
             except asyncio.TimeoutError:
                 event("tool_timeout", status="execution_unknown")
                 return json.dumps({"status": "execution_unknown", "error": "工具执行超时，结果未知，请核实状态后再操作"}, ensure_ascii=False)

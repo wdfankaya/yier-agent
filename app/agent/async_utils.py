@@ -8,6 +8,7 @@
 from __future__ import annotations
 
 import asyncio
+import sys
 from collections.abc import Coroutine
 from typing import TypeVar
 
@@ -19,6 +20,10 @@ def run_sync(coro: Coroutine[object, object, T]) -> T:
     try:
         asyncio.get_running_loop()
     except RuntimeError:
+        from app.config.settings import settings
+        if sys.platform=='win32' and settings.workflow_enabled and settings.workflow_backend=='postgres':
+            with asyncio.Runner(loop_factory=asyncio.SelectorEventLoop) as runner:
+                return runner.run(coro)
         return asyncio.run(coro)
     raise RuntimeError(
         "run_sync() 不能在运行中的事件循环里调用，请改 await 对应的 async API"

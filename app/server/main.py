@@ -62,7 +62,10 @@ def _sse_line(event: dict) -> str:
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     SESSION_DIR.mkdir(parents=True, exist_ok=True)
-    mode = "Multi-Agent" if settings.multi_agent_enabled else "ReAct"
+    mode = "LangGraph" if settings.workflow_enabled else "Multi-Agent" if settings.multi_agent_enabled else "ReAct"
+    if settings.trace_enabled:
+        from app.trace_store import prune
+        await asyncio.to_thread(prune)
     from app.server.cache import get_cache
     redis_status = get_cache().status()
     print(
@@ -75,10 +78,15 @@ async def lifespan(app: FastAPI):
     if not logging.getLogger("yier.service").handlers:
         logging.getLogger("yier.service").addHandler(logging.StreamHandler())
     async def reap():
+        next_prune=time.monotonic()+3600
         while True:
             await asyncio.sleep(max(0.1, settings.session_reap_interval))
             try:
                 await registry.reap_idle()
+                if settings.trace_enabled and time.monotonic()>=next_prune:
+                    from app.trace_store import prune
+                    await asyncio.to_thread(prune)
+                    next_prune=time.monotonic()+3600
             except Exception as exc:
                 failure("session_reaper_failed", exc)
     reaper = asyncio.create_task(reap())
@@ -175,16 +183,25 @@ def _start_chat(req: ChatRequest, rid=None):
     loop = asyncio.get_running_loop()
     q = asyncio.Queue()
     connected = True
+    started = time.perf_counter()
+    first_response = False
 
     def enqueue(event):
         if connected:
             q.put_nowait(event)
 
-    def emit(event):
-        loop.call_soon_threadsafe(enqueue, event)
+    def emit(payload):
+        nonlocal first_response
+        if isinstance(payload,dict) and payload.get('type') in {'final','confirm_required'} and not first_response:
+            first_response=True
+            event('first_response', elapsed_ms=round((time.perf_counter()-started)*1000,2))
+        loop.call_soon_threadsafe(enqueue, payload)
 
     async def run():
         context_token = request_id.set(rid or new_request_id())
+        from app.trace_store import trace_user
+        user_token = trace_user.set(req.user_id)
+        started = time.perf_counter()
         agent = None
         try:
             if registry.get(req.session_id, req.user_id) is None:
@@ -192,7 +209,7 @@ def _start_chat(req: ChatRequest, rid=None):
             with stage("session_init"):
                 agent = await asyncio.to_thread(registry.get_or_create, req.session_id, req.user_id)
             agent.on_event = emit
-            emit({"type": "session", "session_id": req.session_id, "user_id": req.user_id})
+            emit({"type": "session", "session_id": req.session_id, "user_id": req.user_id, "request_id":request_id.get()})
             with stage("chat_total"):
                 await agent.achat(req.message)
         except SessionCapacityError:
@@ -205,6 +222,8 @@ def _start_chat(req: ChatRequest, rid=None):
                 agent.on_event = None
             registry.release(req.session_id, req.user_id)
             emit(_END)
+            event("request_complete", elapsed_ms=round((time.perf_counter()-started)*1000,2))
+            trace_user.reset(user_token)
             request_id.reset(context_token)
 
     _track(asyncio.create_task(run()))
@@ -228,6 +247,9 @@ async def _exclusive(session_id, user, operation):
     _reserve(session_id, user)
     async def run():
         context_token = request_id.set(new_request_id())
+        from app.trace_store import trace_user
+        user_token = trace_user.set(user)
+        started = time.perf_counter()
         try:
             agent = registry.get(session_id, user)
             if agent is None:
@@ -245,6 +267,8 @@ async def _exclusive(session_id, user, operation):
             failure("session_operation_failed", exc)
             raise HTTPException(500, {"message": "操作失败", "request_id": request_id.get()}) from None
         finally:
+            event('request_complete',elapsed_ms=round((time.perf_counter()-started)*1000,2))
+            trace_user.reset(user_token)
             request_id.reset(context_token)
             registry.release(session_id, user)
     return await asyncio.shield(_track(asyncio.create_task(run())))
@@ -293,6 +317,35 @@ async def delete_session(session_id: str, user: str = Depends(authenticated_user
         await close_resources(agent)
         return DeleteSessionResponse(deleted=True, session_id=session_id)
     return await _exclusive(session_id, user, operation)
+
+
+@app.get("/api/traces/{trace_id}")
+async def get_trace(trace_id: str, user: str = Depends(authenticated_user)):
+    from app.trace_store import read
+    result = await asyncio.to_thread(read, trace_id, user)
+    if result is None:
+        raise HTTPException(404, "Trace not found")
+    return result
+
+
+@app.get("/api/workflows/{session_id}")
+async def workflow_status(session_id: str,user: str=Depends(authenticated_user)):
+    async def operation():
+        entry=await asyncio.to_thread(registry.get_or_restore,session_id,user)
+        if entry is None or not hasattr(entry[0],'workflow_status'):
+            raise HTTPException(404,'Workflow not found')
+        return await entry[0].workflow_status()
+    return await _exclusive(session_id,user,operation)
+
+
+@app.post("/api/workflows/{session_id}/recover")
+async def workflow_recover(session_id: str,user: str=Depends(authenticated_user)):
+    async def operation():
+        entry=await asyncio.to_thread(registry.get_or_restore,session_id,user)
+        if entry is None or not hasattr(entry[0],'recover'):
+            raise HTTPException(404,'Workflow not found')
+        return await entry[0].recover()
+    return await _exclusive(session_id,user,operation)
 
 
 if __name__ == "__main__":

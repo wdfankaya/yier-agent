@@ -47,6 +47,8 @@ async def with_timeout_retry(
             if not is_retryable(e) or i >= retries:
                 raise
             delay = base * (2 ** i)
+            from app.observability import event
+            event("model_retry", attempt=i+1, error_type=type(e).__name__)
             print(
                 f"⚠️  LLM {type(e).__name__}，{delay:g}s 后重试 "
                 f"({i + 1}/{retries})"
@@ -57,12 +59,16 @@ async def with_timeout_retry(
 
 
 async def llm_create(client: Any, **kwargs):
-    return await with_timeout_retry(
-        lambda: client.chat.completions.create(**kwargs),
-    )
+    from app.observability import stage, model_usage
+    with stage("model.generate"):
+        response = await with_timeout_retry(lambda: client.chat.completions.create(**kwargs))
+    model_usage(response)
+    return response
 
 
 async def llm_parse(client: Any, **kwargs):
-    return await with_timeout_retry(
-        lambda: client.beta.chat.completions.parse(**kwargs),
-    )
+    from app.observability import stage, model_usage
+    with stage("model.structure"):
+        response = await with_timeout_retry(lambda: client.beta.chat.completions.parse(**kwargs))
+    model_usage(response)
+    return response

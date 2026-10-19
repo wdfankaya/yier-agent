@@ -124,6 +124,9 @@ def search_knowledge(query: KnowledgeQuery, top_k: TopK = 3) -> dict:
         "reranked": bool(getattr(retriever, "last_reranked", False)),
         "results": [
             {
+                "chunk_id": h.chunk.chunk_id,
+                "version": h.chunk.version,
+                "doc_id": h.chunk.doc,
                 "doc": h.chunk.doc,
                 "section": h.chunk.section,
                 "score": round(h.score, 4),

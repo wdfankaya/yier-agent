@@ -17,7 +17,11 @@ INTENT_LABELS = {
 
 
 def main():
-    if settings.multi_agent_enabled:
+    if settings.workflow_enabled:
+        from app.agent.workflow import GraphAgent
+        agent = GraphAgent()
+        mode = "LangGraph 可恢复工作流"
+    elif settings.multi_agent_enabled:
         from app.multi_agent.orchestrator import MultiAgentOrchestrator
         agent = MultiAgentOrchestrator()
         mode = "Multi-Agent 协作模式"
@@ -45,6 +49,17 @@ def main():
             break
 
         if not user_input:
+            continue
+
+        if settings.workflow_enabled and user_input.lower() in ('status','approve','reject','recover'):
+            from app.agent.async_utils import run_sync
+            status = run_sync(agent.workflow_status())
+            if user_input.lower() == 'recover':
+                print(run_sync(agent.recover()))
+            elif user_input.lower() in ('approve','reject') and status.get('pending'):
+                print(run_sync(agent.aresolve_hitl(status['pending']['confirm_token'],user_input.lower()=='approve')))
+            else:
+                print(status)
             continue
 
         if user_input.lower() in ("quit", "exit"):

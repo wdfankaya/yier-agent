@@ -129,6 +129,13 @@ class ChromaBackend(VectorBackend):
             self._size_cache = self._collection.count()
         return self._size_cache
 
+    def all_chunks(self):
+        if self._collection is None:
+            self.load()
+        rows = self._collection.get(include=["documents", "metadatas"])
+        return [Chunk(cid, meta.get("doc", ""), meta.get("section", ""), text)
+                for cid, meta, text in zip(rows["ids"], rows["metadatas"], rows["documents"])]
+
     def load(self) -> None:
         self._ensure_client()
         try:

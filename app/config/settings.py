@@ -12,6 +12,18 @@ class Settings(BaseSettings):
 
     # ReAct 循环
     max_react_steps: int = 5
+    workflow_enabled: bool = False
+    workflow_backend: str = "sqlite"  # sqlite or postgres
+    workflow_sqlite_path: str = "app/sessions/workflows.sqlite"
+    workflow_postgres_url: str = ""  # psycopg URL; defaults to database_url
+    workflow_ledger_path: str = "app/sessions/tool_ledger.sqlite"
+    trace_db_path: str = "app/sessions/traces.sqlite"
+    trace_enabled: bool = True
+    llm_input_cost_per_million: float = Field(0, ge=0)
+    llm_output_cost_per_million: float = Field(0, ge=0)
+    rag_retrieval_mode: str = "legacy"  # legacy, vector, hybrid
+    rag_rrf_k: int = Field(60, ge=1)
+    rag_recall_k: int = Field(20, ge=1, le=200)
 
     # MCP 配置
     mcp_enabled: bool = False
