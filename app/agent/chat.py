@@ -1,9 +1,12 @@
 import asyncio
+import time
+from uuid import uuid4
 import json
 from typing import Optional
 
 from openai import AsyncOpenAI
 
+from app.console import console_print
 from app.agent.async_utils import run_sync
 from app.agent.history import guarded_turn
 from app.agent.maintenance import finish_turn, drain_maintenance, close_resources
@@ -11,7 +14,6 @@ from app.observability import stage, failure
 from app.agent.tools.hitl import aresolve_utterance_on_agent, aresolve_on_agent
 from app.agent.resilience import llm_create, llm_parse
 from app.agent.storage import delete_session, load_session, save_session
-from app.agent.summarizer import summarize
 from app.config.settings import settings
 from app.prompts.customer_service import SYSTEM_PROMPT
 from app.schemas.response import CustomerServiceResponse, IntentType
@@ -53,6 +55,7 @@ class YierAgent:
             memory_dir=settings.memory_dir,
             memory_enabled=settings.memory_enabled,
             max_ltm_facts=settings.max_ltm_facts,
+            source_session=self.session_path,
         )
 
         from app.agent.skills import SkillManager
@@ -101,7 +104,7 @@ class YierAgent:
         """处理用户输入：ReAct 循环 → 结构化提取 → 返回结果（async）。"""
         await drain_maintenance(self)
         await aresolve_utterance_on_agent(self, user_input)
-        self.raw_messages.append({"role": "user", "content": user_input})
+        self.raw_messages.append({'role':'user','content':user_input,'_observed_at':time.time(),'_message_id':uuid4().hex})
 
         with stage("react"):
             final_text = await self._react_loop()
@@ -201,6 +204,8 @@ class YierAgent:
                 return content
 
             msg_dict = {"role": "assistant", "content": assistant_msg.content}
+            from app.agent.history import retain_tool_context
+            retain_tool_context(msg_dict, assistant_msg)
             msg_dict["tool_calls"] = [
                 {
                     "id": tc.id,
@@ -305,39 +310,24 @@ class YierAgent:
         messages: list[dict] = [
             {"role": "system", "content": system_content}
         ]
-        messages.extend(self.memory_manager.build_memory_prompt_sections())
-        if self.summary:
+        query=next((m.get('content','') for m in reversed(self.raw_messages) if m.get('role')=='user'),'')
+        messages.extend(self.memory_manager.build_memory_prompt_sections(query=query))
+        from app.agent.context_summary import prompt_summary
+        verified_summary=prompt_summary(self.summary,self.user_id,self.session_path)
+        if verified_summary:
             messages.append(
                 {
                     "role": "system",
-                    "content": f"以下是此前对话的摘要，用于延续上下文记忆：\n{self.summary}",
+                    "content": f"以下是此前对话的摘要，用于延续上下文记忆：\n{verified_summary}",
+                    "_context_optional": True,
                 }
             )
         messages.extend(self.raw_messages)
         return messages
 
     async def _compress_history(self) -> None:
-        keep = self.history_keep_recent
-        split = len(self.raw_messages) - keep
-        while split > 0 and self.raw_messages[split].get("role") in ("tool",):
-            split -= 1
-        if split <= 0:
-            return
-        old_messages = self.raw_messages[:split]
-        recent = self.raw_messages[split:]
-
-        new_summary = await summarize(
-            client=self.client,
-            model=self.model,
-            old_messages=old_messages,
-            prev_summary=self.summary,
-        )
-        self.summary = new_summary
-        self.raw_messages = recent
-        print(
-            f"\n💾 [已压缩 {len(old_messages)} 条老消息 → summary "
-            f"({len(new_summary)} 字)]\n"
-        )
+        from app.agent.context_summary import compress_agent
+        await compress_agent(self)
 
     def _emit(self, event_type: str, **payload) -> None:
         """事件统一出口：注入了 on_event 就推送结构化事件（SSE），否则静默。"""
@@ -349,7 +339,7 @@ class YierAgent:
         if self.on_event is not None:
             self._emit("thought", content=text)
         else:
-            print(f"\n💭 [思考] {text}")
+            console_print(f"\n💭 [思考] {text}")
 
     def _emit_tool_call(self, func_name: str, func_args: dict) -> None:
         """决定调用工具：SSE 推 tool_call；CLI 保持原打印。"""
@@ -357,7 +347,7 @@ class YierAgent:
             self._emit("tool_call", name=func_name, arguments=func_args)
         else:
             args_str = ", ".join(f"{k}={v!r}" for k, v in func_args.items())
-            print(f"🔧 [调用工具] {func_name}({args_str})")
+            console_print(f"🔧 [调用工具] {func_name}({args_str})")
 
     def _emit_tool_result(self, func_name: str, result: str) -> None:
         """工具执行完：SSE 推完整结果的 tool_result；CLI 打印（截断到 300 字）。"""
@@ -365,5 +355,5 @@ class YierAgent:
             self._emit("tool_result", name=func_name, content=result)
         else:
             display = result if len(result) <= 300 else result[:300] + "..."
-            print(f"📋 [工具结果] {display}")
+            console_print(f"📋 [工具结果] {display}")
         notify_confirm_required(self.on_event, self._emit, result)

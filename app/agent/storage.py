@@ -64,7 +64,11 @@ def save_session(
         uid = user_id or settings.memory_user_id
         key = _db_key(path)
         sid = sync_get_or_create_session(uid, key)
-        sync_replace_session_state(sid, messages, summary, short_term_memory or None)
+        short_term_memory = dict(short_term_memory or {})
+        short_term_memory['_message_metadata'] = [
+            {'digest': _message_digest(m), 'meta': {k:v for k,v in m.items() if k.startswith('_')}}
+            for m in messages]
+        sync_replace_session_state(sid, messages, summary, short_term_memory)
         # 写穿：PG 是真相源，成功后再更新缓存副本；Redis 失败忽略。
         _cache().set_session(
             uid, key, _session_payload(messages, summary, short_term_memory),
@@ -104,6 +108,12 @@ def load_session(
         st = sync_load_session_state(uid, key)
         if st is None:
             return None
+        for msg, stamp in zip(st.messages, (st.stm or {}).get('_message_metadata', [])):
+            if _message_digest(msg) == stamp.get('digest'):
+                msg.update(stamp.get('meta', {}))
+        for index, msg in enumerate(st.messages):
+            msg.setdefault('_observed_at', -1)
+            msg.setdefault('_message_id', f'legacy:{index}:{_message_digest(msg)}')
         payload = _session_payload(st.messages, st.summary, st.stm)
         _cache().set_session(uid, key, payload)  # Cache-Aside 回填
         return payload
@@ -123,6 +133,11 @@ def load_session(
         print("⚠️  会话文件格式不识别，已忽略")
         return None
 
+    # Legacy histories use their durable observation bound, never extraction completion time.
+    import hashlib
+    for index, msg in enumerate(data.get('messages', [])):
+        msg.setdefault('_observed_at', file_path.stat().st_mtime)
+        msg.setdefault('_message_id', hashlib.sha256(f'{path}:{index}:{_message_digest(msg)}'.encode()).hexdigest())
     return {
         "summary": data.get("summary"),
         "messages": data.get("messages", []),
@@ -132,8 +147,10 @@ def load_session(
 
 def delete_session(path: str, user_id: Optional[str] = None) -> None:
     """删除会话持久状态（PG 删行级联清消息；JSON 删文件），不存在时静默。"""
+    from app.agent.context_summary import delete_archive
+    from app.config.settings import settings
+    delete_archive(user_id or settings.memory_user_id, path)
     if _is_db():
-        from app.config.settings import settings
         from app.server.repository import sync_delete_session_state
         uid = user_id or settings.memory_user_id
         key = _db_key(path)
@@ -144,3 +161,10 @@ def delete_session(path: str, user_id: Optional[str] = None) -> None:
     file_path = Path(path)
     if file_path.exists():
         file_path.unlink()
+
+
+def _message_digest(message):
+    import hashlib
+    from app.agent.context import dumps
+    return hashlib.sha256(dumps({k:message.get(k) for k in
+        ('role','content','tool_calls','tool_call_id')}).encode()).hexdigest()

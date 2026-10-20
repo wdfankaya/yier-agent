@@ -112,7 +112,20 @@ class Settings(BaseSettings):
     # 多轮对话管理
     session_path: str = "app/sessions/session.json"
     history_threshold: int = 10  # 原始消息数达到阈值后生成摘要，并保留近期消息
-    history_keep_recent: int = 3  # 压缩时保留最近 3 条原始消息
+    history_keep_recent: int = 3  # 兼容旧配置；实际使用 history_keep_turns 保留完整轮次
+    context_window_tokens: int = Field(32768, ge=1024)
+    context_output_tokens: int = Field(2048, ge=128)
+    context_safety_tokens: int = Field(512, ge=64)
+    history_keep_turns: int = Field(3, ge=1)
+    summary_archive_path: str = "app/sessions/context_archive.sqlite"
+    summary_max_bytes: int = Field(6000, ge=512)
+    memory_semantic_enabled: bool = False
+    memory_semantic_min_score: float = Field(0.55, ge=0, le=1)
+    memory_semantic_timeout: float = Field(3.0, gt=0, le=30)
+    memory_top_k: int = Field(8, ge=1, le=50)
+    memory_preference_ttl_days: int = Field(90, ge=1)
+    memory_temporary_ttl_days: int = Field(7, ge=1)
+    memory_archive_limit: int = Field(200, ge=10)
 
     model_config = {"env_file": ".env"}
 

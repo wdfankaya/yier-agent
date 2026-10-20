@@ -74,7 +74,7 @@ class WorkflowAPITests(unittest.IsolatedAsyncioTestCase):
         body={'session_id':'s1','token':token,'approved':True}
         approved=await self.client.post('/api/confirm',json=body)
         self.assertEqual(approved.status_code,200,approved.text)
-        self.assertTrue(approved.json()['executed'])
+        self.assertTrue(approved.json()['executed'], approved.text)
         self.assertEqual(approved.json()['reply'],'模拟退款完成')
         self.assertEqual((await self.client.post('/api/confirm',json=body)).status_code,400)
         self.assertEqual(self.effects,1)

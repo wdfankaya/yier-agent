@@ -33,6 +33,7 @@ from app.server.auth import authenticated_user, check_claim
 from app.server.identifiers import validate_id
 from fastapi.responses import FileResponse, StreamingResponse
 
+from app.agent.context import ContextBudgetExceeded
 from app.config.settings import settings
 from app.observability import request_id, new_request_id, failure, stage, event
 from app.agent.maintenance import drain_maintenance, close_resources
@@ -212,6 +213,8 @@ def _start_chat(req: ChatRequest, rid=None):
             emit({"type": "session", "session_id": req.session_id, "user_id": req.user_id, "request_id":request_id.get()})
             with stage("chat_total"):
                 await agent.achat(req.message)
+        except ContextBudgetExceeded as exc:
+            emit({"type":"error", "code":"context_budget", "message":str(exc)})
         except SessionCapacityError:
             emit({"type": "error", "message": "服务会话已满，请稍后重试", "code": "session_capacity"})
         except Exception as exc:
@@ -297,7 +300,7 @@ async def get_session(session_id: str, user: str = Depends(authenticated_user)):
             raise HTTPException(404, "会话不存在")
         agent, _ = entry
         return SessionMessagesResponse(session_id=session_id, user_id=user,
-            history_size=len(agent.raw_messages), messages=list(agent.raw_messages))
+            history_size=len(agent.raw_messages), messages=[{k:v for k,v in m.items() if k!='_reasoning_content'} for m in agent.raw_messages])
     return await _exclusive(session_id, user, operation)
 
 
@@ -346,6 +349,54 @@ async def workflow_recover(session_id: str,user: str=Depends(authenticated_user)
             raise HTTPException(404,'Workflow not found')
         return await entry[0].recover()
     return await _exclusive(session_id,user,operation)
+
+
+from pydantic import BaseModel, Field
+
+class SummaryCorrection(BaseModel):
+    excluded_source_ids: list[str] = Field(default_factory=list, max_length=200)
+
+@app.get("/api/sessions/{session_id}/summary")
+async def get_summary(session_id: str, user: str = Depends(authenticated_user)):
+    def operation():
+        from app.agent.context_summary import verified
+        entry = registry.get_or_restore(session_id, user)
+        if entry is None:
+            raise HTTPException(404, "会话不存在")
+        agent = entry[0]
+        return {"summary": verified(agent.summary, user, agent.session_path)}
+    return await _exclusive(session_id, user, operation)
+
+@app.get("/api/sessions/{session_id}/summary/sources/{source_id}")
+async def get_summary_source(session_id: str, source_id: str, user: str = Depends(authenticated_user)):
+    def operation():
+        from app.agent.context_summary import read_source
+        entry = registry.get_or_restore(session_id, user)
+        if entry is None:
+            raise HTTPException(404, "会话不存在")
+        source = read_source(user, entry[0].session_path, source_id)
+        if source is None:
+            raise HTTPException(404, "来源不存在")
+        return {"source_id":source_id, "message":{k:v for k,v in source.items() if k!='_reasoning_content'}}
+    return await _exclusive(session_id, user, operation)
+
+
+@app.post("/api/sessions/{session_id}/summary/rebuild")
+async def rebuild_summary(session_id: str, req: SummaryCorrection,
+                          user: str = Depends(authenticated_user)):
+    def operation():
+        from app.agent.context_summary import rebuild, verified
+        entry = registry.get_or_restore(session_id, user)
+        if entry is None:
+            raise HTTPException(404, "会话不存在")
+        agent = entry[0]
+        try:
+            agent.summary = rebuild(user, agent.session_path, req.excluded_source_ids)
+        except ValueError:
+            raise HTTPException(400, "更正的来源不属于此会话") from None
+        agent.save()
+        return {"summary": verified(agent.summary, user, agent.session_path)}
+    return await _exclusive(session_id, user, operation)
 
 
 if __name__ == "__main__":

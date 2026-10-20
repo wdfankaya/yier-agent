@@ -59,6 +59,8 @@ async def with_timeout_retry(
 
 
 async def llm_create(client: Any, **kwargs):
+    from app.agent.context import prepare_call
+    kwargs=prepare_call(kwargs)
     from app.observability import stage, model_usage
     with stage("model.generate"):
         response = await with_timeout_retry(lambda: client.chat.completions.create(**kwargs))
@@ -67,6 +69,8 @@ async def llm_create(client: Any, **kwargs):
 
 
 async def llm_parse(client: Any, **kwargs):
+    from app.agent.context import prepare_call
+    kwargs=prepare_call(kwargs)
     from app.observability import stage, model_usage
     with stage("model.structure"):
         response = await with_timeout_retry(lambda: client.beta.chat.completions.parse(**kwargs))

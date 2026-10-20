@@ -1,0 +1,36 @@
+{
+  "created": "2026-10-20T02:52:56.041647+00:00",
+  "kind": "real_model_synthetic_context",
+  "model": "deepseek-v4-flash",
+  "configured_window": 32768,
+  "output_reserve": 2048,
+  "safety_reserve": 512,
+  "cases": [
+    {
+      "name": "long_chinese",
+      "before_bytes": 21595,
+      "fixture_api_calls": 0,
+      "after_bytes": 21595,
+      "api_calls": 1,
+      "prompt_tokens": 3952,
+      "completion_tokens": 65,
+      "passed": true
+    },
+    {
+      "name": "long_tool_tail",
+      "before_bytes": 180575,
+      "fixture_api_calls": 1,
+      "after_bytes": 745,
+      "api_calls": 1,
+      "prompt_tokens": 179,
+      "completion_tokens": 119,
+      "passed": true
+    },
+    {
+      "name": "oversize_rejected_locally",
+      "passed": true,
+      "api_calls": 0
+    }
+  ],
+  "success": true
+}

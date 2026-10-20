@@ -135,3 +135,10 @@ class KbMeta(Base):
 
     key: Mapped[str] = mapped_column(String(64), primary_key=True)
     value: Mapped[str] = mapped_column(Text, nullable=False)
+
+
+class MemoryState(Base):
+    """One row per user, locked for atomic evidence merge and reset generations."""
+    __tablename__ = "memory_states_v2"
+    user_id: Mapped[str] = mapped_column(String(64), primary_key=True)
+    payload: Mapped[dict] = mapped_column(JSONB, nullable=False)

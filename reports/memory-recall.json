@@ -1,0 +1,112 @@
+{
+  "kind": "synthetic_small_contrast_set_not_production_benchmark",
+  "created": "2026-10-20T06:50:47.649051+00:00",
+  "embedding_model": "BAAI/bge-m3",
+  "chat_model": "deepseek-v4-flash",
+  "cases": [
+    {
+      "query": "深色",
+      "expected_source": "我喜欢黑色",
+      "lexical_source": null,
+      "lexical_hit": false,
+      "vector_source": "我喜欢黑色",
+      "vector_hit": true,
+      "cosine": 0.6022,
+      "runtime_source": "我喜欢黑色",
+      "runtime_hit": true
+    },
+    {
+      "query": "预算有限",
+      "expected_source": "我喜欢便宜一点的",
+      "lexical_source": null,
+      "lexical_hit": false,
+      "vector_source": "我喜欢便宜一点的",
+      "vector_hit": true,
+      "cosine": 0.6396,
+      "runtime_source": "我喜欢便宜一点的",
+      "runtime_hit": true
+    },
+    {
+      "query": "衣服不要紧绷",
+      "expected_source": "我喜欢宽松的衣服",
+      "lexical_source": "我喜欢宽松的衣服",
+      "lexical_hit": true,
+      "vector_source": "我喜欢宽松的衣服",
+      "vector_hit": true,
+      "cosine": 0.73,
+      "runtime_source": "我喜欢宽松的衣服",
+      "runtime_hit": true
+    },
+    {
+      "query": "黑色",
+      "expected_source": "我喜欢黑色",
+      "lexical_source": "我喜欢黑色",
+      "lexical_hit": true,
+      "vector_source": "我喜欢黑色",
+      "vector_hit": true,
+      "cosine": 0.8412,
+      "runtime_source": "我喜欢黑色",
+      "runtime_hit": true
+    },
+    {
+      "query": "便宜一点",
+      "expected_source": "我喜欢便宜一点的",
+      "lexical_source": "我喜欢便宜一点的",
+      "lexical_hit": true,
+      "vector_source": "我喜欢便宜一点的",
+      "vector_hit": true,
+      "cosine": 0.8874,
+      "runtime_source": "我喜欢便宜一点的",
+      "runtime_hit": true
+    },
+    {
+      "query": "鞋码",
+      "expected_source": "我的鞋码是42",
+      "lexical_source": "我的鞋码是42",
+      "lexical_hit": true,
+      "vector_source": "我的鞋码是42",
+      "vector_hit": true,
+      "cosine": 0.818,
+      "runtime_source": "我的鞋码是42",
+      "runtime_hit": true
+    },
+    {
+      "query": "发票抬头",
+      "expected_source": null,
+      "lexical_source": null,
+      "lexical_hit": true,
+      "vector_source": null,
+      "vector_hit": true,
+      "cosine": 0.515,
+      "runtime_source": null,
+      "runtime_hit": true
+    },
+    {
+      "query": "物流单号",
+      "expected_source": null,
+      "lexical_source": null,
+      "lexical_hit": true,
+      "vector_source": null,
+      "vector_hit": true,
+      "cosine": 0.484,
+      "runtime_source": null,
+      "runtime_hit": true
+    }
+  ],
+  "answer_ablation": [
+    {
+      "retrieval": "lexical",
+      "mentions_black": false,
+      "answers_unknown": true
+    },
+    {
+      "retrieval": "vector",
+      "mentions_black": true,
+      "answers_unknown": false
+    }
+  ],
+  "lexical_hits": 6,
+  "vector_hits": 8,
+  "runtime_hits": 8,
+  "total": 8
+}

@@ -90,6 +90,8 @@ class SubAgent:
                 return content, new_messages
 
             msg_dict: dict = {"role": "assistant", "content": assistant_msg.content}
+            from app.agent.history import retain_tool_context
+            retain_tool_context(msg_dict, assistant_msg)
             msg_dict["tool_calls"] = [
                 {
                     "id": tc.id,

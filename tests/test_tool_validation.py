@@ -51,7 +51,7 @@ class ValidationTests(unittest.TestCase):
         result=json.loads(tm.execute_tool('apply_refund',{'order_id':'a','reason':'r'}))
         self.assertEqual(result['code'],'unknown_tool');self.assertFalse(gate.pending)
     def test_defaults_and_direct_calls(self):
-        self.assertEqual(validate_arguments('recall_user_memory',{}),{'query':''})
+        self.assertEqual(validate_arguments('recall_user_memory',{}),{'query':'','category':None,'top_k':5})
         self.assertEqual(validate_arguments('list_user_orders',{}),{})
         from app.agent.tools.refund import apply_refund
         with self.assertRaises(ToolInputError):apply_refund('a',123)
@@ -97,12 +97,12 @@ class AsyncTests(unittest.IsolatedAsyncioTestCase):
                 count+=1
                 if count==1:
                     call=SimpleNamespace(id='bad',function=SimpleNamespace(name='query_order',arguments='{'))
-                    message=SimpleNamespace(content=None,tool_calls=[call])
+                    message=SimpleNamespace(content=None,tool_calls=[call],reasoning_content='opaque replay fixture')
                 elif count==2:
                     feedback=json.loads(kwargs['messages'][-1]['content'])
                     self.assertEqual(feedback['code'],'invalid_tool_arguments')
                     call=SimpleNamespace(id='good',function=SimpleNamespace(name='query_order',arguments='{"order_id":"ORD-20240120-002"}'))
-                    message=SimpleNamespace(content=None,tool_calls=[call])
+                    message=SimpleNamespace(content=None,tool_calls=[call],reasoning_content='opaque replay fixture')
                 else:
                     self.assertTrue(json.loads(kwargs['messages'][-1]['content'])['success'])
                     message=SimpleNamespace(content='corrected',tool_calls=None)
@@ -121,5 +121,8 @@ class AsyncTests(unittest.IsolatedAsyncioTestCase):
                 history=agent.raw_messages
             self.assertEqual(reply,'corrected');self.assertEqual(count,3)
             self.assertEqual(len([m for m in history if m['role']=='tool']),2)
+            from app.agent.context import prepare_call
+            wire=prepare_call({'messages':history})['messages']
+            self.assertTrue(all(m.get('reasoning_content')=='opaque replay fixture' for m in wire if m.get('tool_calls')))
 
 if __name__=='__main__':unittest.main()

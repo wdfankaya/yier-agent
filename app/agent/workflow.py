@@ -145,7 +145,8 @@ def compile_workflow(model, execute, sensitive, saver, ledger, thread_id, max_st
                             result=json.loads(raw) if isinstance(raw,str) else raw
                             if not isinstance(result,dict):
                                 result={'status':'execution_unknown'}
-                        except Exception:
+                        except Exception as exc:
+                            failure('workflow_effect_failed', exc)
                             result={'status':'execution_unknown'}
                         await asyncio.to_thread(ledger.finish,key,result)
         else:
@@ -203,6 +204,7 @@ class GraphAgent(YierAgent):
     async def _model(self,messages):
         from app.agent.resilience import llm_create
         self.raw_messages=list(messages)
+        await self.memory_manager.aprepare(next((m.get("content","") for m in reversed(messages) if m.get("role")=="user"),""))
         prompt=self._build_messages()
         prompt[0]['content'] += ('\n\n当前启用持久化人工审批工作流。用户明确申请退款且订单号、原因齐全时，'
             '先查询订单，再调用 apply_refund 来创建待确认操作；框架会在真正执行前暂停并显示确认按钮。'
@@ -216,6 +218,8 @@ class GraphAgent(YierAgent):
         msg=result.choices[0].message
         output={'role':'assistant','content':msg.content}
         if msg.tool_calls:
+            from app.agent.history import retain_tool_context
+            retain_tool_context(output,msg)
             output['tool_calls']=[{'id':c.id,'type':'function','function':{'name':c.function.name,'arguments':c.function.arguments}} for c in msg.tool_calls]
         return output
 
@@ -249,7 +253,7 @@ class GraphAgent(YierAgent):
         if not pauses and self.memory_manager.memory_enabled:
             async def maintain():
                 try:
-                    await asyncio.wait_for(self.memory_manager.aupdate_short_term(self.raw_messages[-6:]),settings.memory_maintenance_timeout)
+                    await asyncio.wait_for(self.memory_manager.aupdate_short_term(self.raw_messages),settings.memory_maintenance_timeout)
                     await asyncio.to_thread(self.save)
                     await self._maybe_consolidate()
                 except Exception as exc:
@@ -261,7 +265,7 @@ class GraphAgent(YierAgent):
         return result
 
     async def achat(self,user_input):
-        from app.agent.maintenance import drain_maintenance
+        from app.agent.maintenance import drain_maintenance, needs_compression
         await drain_maintenance(self)
         async with self._graph() as graph:
             snap=await graph.aget_state(self.graph_config)
@@ -277,11 +281,11 @@ class GraphAgent(YierAgent):
             repair_tool_groups(messages)
             # Compact only complete turns, persist the summary before graph entry.
             self.raw_messages=messages
-            if len(messages)>self.history_threshold:
+            if needs_compression(self):
                 await self._compress_history()
                 messages=list(self.raw_messages)
                 await asyncio.to_thread(self.save)
-            state=await graph.ainvoke({'messages':messages+[{'role':'user','content':user_input}],
+            state=await graph.ainvoke({'messages':messages+[{'role':'user','content':user_input,'_observed_at':time.time(),'_message_id':secrets.token_hex(16)}],
                 'steps':0,'pending':None,'calls':[],'final':'','approval_result':{},'denied':snap.values.get('denied',[])}, self.graph_config)
         return await self._finish(state)
 

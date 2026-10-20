@@ -30,6 +30,9 @@ def guarded_turn(method):
     async def wrapped(self, *args, **kwargs):
         from app.agent.maintenance import drain_maintenance
         await drain_maintenance(self)
+        prepare = getattr(getattr(self, "memory_manager", None), "aprepare", None)
+        if prepare is not None:
+            await prepare(args[0] if args and isinstance(args[0],str) else kwargs.get("user_input",""))
         repair_tool_groups(self.raw_messages)
         try:
             return await method(self, *args, **kwargs)
@@ -37,3 +40,11 @@ def guarded_turn(method):
             repair_tool_groups(self.raw_messages)
             raise
     return wrapped
+
+
+def retain_tool_context(target, sdk_message):
+    """Keep provider-required opaque reasoning for tool replay; never emit it to users."""
+    value = getattr(sdk_message, 'reasoning_content', None)
+    if isinstance(value, str):
+        target['_reasoning_content'] = value
+    return target

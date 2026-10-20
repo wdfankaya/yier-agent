@@ -1,0 +1,12 @@
+{
+  "kind": "real_postgresql_isolated_container",
+  "created": "2026-10-20T06:50:32.862023+00:00",
+  "server_version": "PostgreSQL 16.15 on x86_64-pc-linux-musl, compiled by gcc (Alpine 15.2.0) 15.2.0, 64-bit",
+  "image_id": "sha256:721873c34ceb9f8d8fc265984940dc982404c105f19ad51be9fdc5970a6080ea",
+  "tests_run": 8,
+  "success": true,
+  "failures": [],
+  "errors": [],
+  "skipped": [],
+  "elapsed_seconds": 6.722
+}

@@ -1,6 +1,18 @@
 {
-  "created": "2026-10-19T09:35:49.954688+00:00",
+  "created": "2026-10-20T06:50:49.165717+00:00",
   "python": "3.13.14",
+  "environment": {
+    "python": "3.13.14",
+    "python_executable": "D:\\A\u7b80\u5386\\agent\u9879\u76ee\\yier-agent\\app\\sessions\\repro-env\\Scripts\\python.exe",
+    "platform": "Windows-11-10.0.26200-SP0",
+    "expected_python": "3.13.14",
+    "python_matches": true,
+    "lock_sha256": "c877a82323060c25d744f9bf88d216d22797add4304f7c1b38dd2a2c9aa53359",
+    "locked_packages": 154,
+    "dependencies_match": true,
+    "dependency_mismatches": [],
+    "source_sha256": "cd39d34c6ecf1b31da0bfe6aa30455b8bb2f82b6bb33e424a58a5d19f3a4ce45"
+  },
   "kind": "offline_injected_model_real_sqlite_and_http",
   "modules": [
     "tests.test_workflow",
@@ -8,12 +20,13 @@
     "tests.test_hybrid_trace",
     "tests.test_security_regressions",
     "tests.test_tool_validation",
-    "tests.test_optimizations"
+    "tests.test_optimizations",
+    "tests.test_context_memory"
   ],
-  "tests_run": 55,
+  "tests_run": 98,
   "failures": [],
   "errors": [],
   "skipped": [],
-  "elapsed_seconds": 4.488,
+  "elapsed_seconds": 7.157,
   "success": true
 }

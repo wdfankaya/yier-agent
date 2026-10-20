@@ -4,6 +4,8 @@
 """
 
 import asyncio
+import time
+from uuid import uuid4
 from typing import Optional
 
 from openai import AsyncOpenAI
@@ -15,7 +17,6 @@ from app.observability import stage, failure
 from app.agent.tools.hitl import aresolve_utterance_on_agent, aresolve_on_agent
 from app.agent.resilience import llm_create, llm_parse
 from app.agent.storage import delete_session, load_session, save_session
-from app.agent.summarizer import summarize
 from app.config.settings import settings
 from app.multi_agent.agents import AGENT_CONFIGS, SubAgent
 from app.multi_agent.router import Router
@@ -59,6 +60,7 @@ class MultiAgentOrchestrator:
             memory_dir=settings.memory_dir,
             memory_enabled=settings.memory_enabled,
             max_ltm_facts=settings.max_ltm_facts,
+            source_session=self.session_path,
         )
 
         from app.agent.skills import SkillManager
@@ -122,7 +124,7 @@ class MultiAgentOrchestrator:
         """路由 → 子 Agent 执行 → 结构化提取 → 返回结果。"""
         await drain_maintenance(self)
         await aresolve_utterance_on_agent(self, user_input)
-        self.raw_messages.append({"role": "user", "content": user_input})
+        self.raw_messages.append({'role':'user','content':user_input,'_observed_at':time.time(),'_message_id':uuid4().hex})
 
         agent_key = await self.router.aroute(user_input, self.raw_messages)
         agent = self.agents[agent_key]
@@ -221,11 +223,15 @@ class MultiAgentOrchestrator:
         messages: list[dict] = [
             {"role": "system", "content": system_content}
         ]
-        messages.extend(self.memory_manager.build_memory_prompt_sections())
-        if self.summary:
+        query=next((m.get('content','') for m in reversed(self.raw_messages) if m.get('role')=='user'),'')
+        messages.extend(self.memory_manager.build_memory_prompt_sections(query=query))
+        from app.agent.context_summary import prompt_summary
+        verified_summary=prompt_summary(self.summary,self.user_id,self.session_path)
+        if verified_summary:
             messages.append({
                 "role": "system",
-                "content": f"以下是此前对话的摘要，用于延续上下文记忆：\n{self.summary}",
+                "content": f"以下是此前对话的摘要，用于延续上下文记忆：\n{verified_summary}",
+                    "_context_optional": True,
             })
         messages.extend(self.raw_messages)
         return messages
@@ -284,24 +290,5 @@ class MultiAgentOrchestrator:
         return CustomerServiceResponse.model_validate_json(raw)
 
     async def _compress_history(self) -> None:
-        keep = self.history_keep_recent
-        split = len(self.raw_messages) - keep
-        while split > 0 and self.raw_messages[split].get("role") in ("tool",):
-            split -= 1
-        if split <= 0:
-            return
-        old_messages = self.raw_messages[:split]
-        recent = self.raw_messages[split:]
-
-        new_summary = await summarize(
-            client=self.client,
-            model=self.model,
-            old_messages=old_messages,
-            prev_summary=self.summary,
-        )
-        self.summary = new_summary
-        self.raw_messages = recent
-        print(
-            f"\n💾 [已压缩 {len(old_messages)} 条老消息 → summary "
-            f"({len(new_summary)} 字)]\n"
-        )
+        from app.agent.context_summary import compress_agent
+        await compress_agent(self)

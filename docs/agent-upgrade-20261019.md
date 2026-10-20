@@ -111,7 +111,7 @@ PostgreSQL 配置：`WORKFLOW_BACKEND=postgres`，可用 `WORKFLOW_POSTGRES_URL`
 
 ## 回归验收
 
-运行 `python scripts/verify_upgrades.py`，报告在 `reports/upgrade-tests.json`。当前 **55 项通过**，包含真实 SQLite checkpoint、重建图/Agent、错误令牌/过期/拒绝、执行后模型故障恢复、并发占用、用户隔离、HTTP 恢复和追踪权限，以及已有工具治理、会话互斥、记忆维护回归。这里模型用测试替身，不冒充真实模型效果。
+运行 `python scripts/verify_upgrades.py`，报告在 `reports/upgrade-tests.json`。2026-10-19 当时 **55 项通过**（新增记忆回归见 [后续修复记录](memory-context-20261020.md) 与最新机器报告），包含真实 SQLite checkpoint、重建图/Agent、错误令牌/过期/拒绝、执行后模型故障恢复、并发占用、用户隔离、HTTP 恢复和追踪权限，以及已有工具治理、会话互斥、记忆维护回归。这里模型用测试替身，不冒充真实模型效果。
 
 另运行原 `test_rerank.py`、`test_hitl.py`、`test_stability.py`：已执行检查通过；Redis Lua 实例测试因 Redis 不可用跳过。真实模型工作流结果单独保存于 `reports/workflow-live.json`，不能与故障注入测试混算成任务完成率。
 

@@ -23,16 +23,20 @@ class MemoryManager:
         memory_dir: str = "app/sessions/memory",
         memory_enabled: bool = True,
         max_ltm_facts: int = 50,
+        source_session: str = "",
     ):
         self.client = client
         self.model = model
         self.memory_enabled = memory_enabled
 
-        self.stm = ShortTermMemory()
+        from uuid import uuid4
+        self.source_session = source_session or uuid4().hex
+        self.stm = ShortTermMemory(self.source_session)
         self.ltm = LongTermMemory(
             user_id=user_id,
             memory_dir=memory_dir,
             max_facts=max_ltm_facts,
+            source_session=self.source_session,
         )
 
         if self.memory_enabled:
@@ -43,6 +47,7 @@ class MemoryManager:
         if not self.memory_enabled:
             return
         await self.stm.aupdate(self.client, self.model, recent_messages)
+        await self.ltm.aextract_and_save(self.client, self.model, recent_messages, None)
 
     def update_short_term(self, recent_messages: list[dict]) -> None:
         """每轮对话后更新短期记忆（同步包装）。"""
@@ -50,18 +55,25 @@ class MemoryManager:
             return
         run_sync(self.aupdate_short_term(recent_messages))
 
-    def build_memory_prompt_sections(self) -> list[dict]:
+    async def aprepare(self, query=""):
+        import asyncio
+        if self.memory_enabled:
+            await asyncio.to_thread(self.ltm.refresh)
+            await asyncio.to_thread(self.ltm.prepare_semantic, query)
+            self.stm.reconcile(self.ltm.inspect(), self.ltm.reset_at)
+
+    def build_memory_prompt_sections(self, query="") -> list[dict]:
         """生成所有记忆相关的 system prompt 消息列表。"""
         if not self.memory_enabled:
             return []
 
         sections = []
-        ltm_section = self.ltm.build_prompt_section()
+        ltm_section = self.ltm.build_prompt_section(query)
         if ltm_section:
-            sections.append({"role": "system", "content": ltm_section})
-        stm_section = self.stm.build_prompt_section()
+            sections.append({"role": "system", "content": ltm_section, "_context_optional": True})
+        stm_section = self.stm.build_prompt_section(query)
         if stm_section:
-            sections.append({"role": "system", "content": stm_section})
+            sections.append({"role": "system", "content": stm_section, "_context_optional": True})
         return sections
 
     async def aconsolidate_to_long_term(
@@ -95,4 +107,4 @@ class MemoryManager:
         return self.stm.to_dict()
 
     def restore_stm(self, data: dict) -> None:
-        self.stm = ShortTermMemory.from_dict(data)
+        self.stm = ShortTermMemory.from_dict(data, self.source_session)

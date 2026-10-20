@@ -17,11 +17,11 @@ async def finish_turn(agent, result, save):
 
     async def maintain():
         changed = False
-        for name, action in (("short_term_memory", lambda: agent.memory_manager.aupdate_short_term(agent.raw_messages[-6:])),
+        for name, action in (("short_term_memory", lambda: agent.memory_manager.aupdate_short_term(agent.raw_messages)),
                              ("history_compression", agent._compress_history)):
             if name == "short_term_memory" and not getattr(agent.memory_manager, "memory_enabled", True):
                 continue
-            if name == "history_compression" and len(agent.raw_messages) <= agent.history_threshold:
+            if name == "history_compression" and not needs_compression(agent):
                 continue
             try:
                 with stage(name):
@@ -72,3 +72,9 @@ async def close_resources(agent):
     for result in results:
         if isinstance(result, Exception):
             failure("resource_close_failed", result)
+
+
+def needs_compression(agent):
+    from app.agent.context import estimate_tokens, input_budget
+    return (len(agent.raw_messages) > agent.history_threshold
+            or estimate_tokens(agent.raw_messages) > input_budget() // 2)
